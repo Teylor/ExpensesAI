@@ -25,6 +25,13 @@ import {
   flushSentry,
   initSentry,
 } from "./observability/sentry.js";
+import { startRecurringScheduler } from "./recurring/scheduler.js";
+import {
+  PostgresRecurringAdvisoryLock,
+  PostgresRecurringRepository,
+  RecurringService,
+  registerRecurringCommandHandlers,
+} from "./recurring/service.js";
 import {
   PostgresTransactionsRepository,
   registerTransactionCommandHandlers,
@@ -67,11 +74,23 @@ async function start(): Promise<void> {
     getUserPreferences: (userId) => authService.getUserPreferences(userId),
     fxRateReader: fxService,
   });
+  const recurringService = new RecurringService({
+    repository: new PostgresRecurringRepository(dbClient),
+    accountsRepository,
+    getUserPreferences: (userId) => authService.getUserPreferences(userId),
+    commandBus,
+    advisoryLock: new PostgresRecurringAdvisoryLock(dbClient),
+  });
   registerAccountCommandHandlers(commandBus, accountsService);
   registerCategoryCommandHandlers(commandBus, categoriesService);
   registerTransactionCommandHandlers(commandBus, transactionsService);
+  registerRecurringCommandHandlers(commandBus, recurringService);
   const fxScheduler = startFxDailyScheduler({
     fxService,
+    onError: captureExceptionSafe,
+  });
+  const recurringScheduler = startRecurringScheduler({
+    recurringService,
     onError: captureExceptionSafe,
   });
 
@@ -85,6 +104,7 @@ async function start(): Promise<void> {
     accountsService,
     categoriesService,
     transactionsService,
+    recurringService,
     secureCookies: env.NODE_ENV === "production",
     onError: captureExceptionSafe,
   });
@@ -98,6 +118,7 @@ async function start(): Promise<void> {
     app.log.info({ signal }, "Graceful shutdown initiated");
     try {
       fxScheduler.stop();
+      recurringScheduler.stop();
       await app.close();
       await dbClient.close();
       await flushSentry();

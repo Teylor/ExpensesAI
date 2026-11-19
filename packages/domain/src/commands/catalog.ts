@@ -120,6 +120,10 @@ const recurringUpsertPayloadSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
+const recurringDeletePayloadSchema = z.object({
+  ruleId: z.uuid(),
+});
+
 const investmentUpsertPayloadSchema = z.object({
   investmentId: z.uuid().optional(),
   assetType: editableCategoryNameSchema,
@@ -191,6 +195,11 @@ export const commandEnvelopeSchema = z.discriminatedUnion("type", [
     ...commandMetaFields,
     type: z.literal("recurring.upsert"),
     payload: recurringUpsertPayloadSchema,
+  }),
+  z.object({
+    ...commandMetaFields,
+    type: z.literal("recurring.delete"),
+    payload: recurringDeletePayloadSchema,
   }),
   z.object({
     ...commandMetaFields,

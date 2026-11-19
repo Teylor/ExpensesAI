@@ -14,6 +14,7 @@ import {
   CommandHandlerNotFoundError,
   CommandNotFoundError,
 } from "../commands/bus.js";
+import { RecurringRuleNotFoundError } from "../recurring/service.js";
 import {
   AccountCurrencyMismatchError,
   TransactionNotFoundError,
@@ -61,6 +62,12 @@ function handleCommandRouteError(reply: FastifyReply, error: unknown) {
   if (error instanceof TransactionNotFoundError) {
     return reply.code(404).send({
       error: "TRANSACTION_NOT_FOUND",
+      message: error.message,
+    });
+  }
+  if (error instanceof RecurringRuleNotFoundError) {
+    return reply.code(404).send({
+      error: "RECURRING_RULE_NOT_FOUND",
       message: error.message,
     });
   }

@@ -2,6 +2,7 @@ import {
   addMoney,
   type CommandEnvelope,
   commandEnvelopeSchema,
+  computeInitialNextDueLocalDate,
   createMoney,
   normalizeCurrencyCode,
   resolveCrossRate,
@@ -12,6 +13,7 @@ import type {
   AgenticfOfflineDb,
   LocalAccount,
   LocalCategory,
+  LocalRecurringRule,
   LocalTransaction,
 } from "./db.js";
 
@@ -443,6 +445,60 @@ export class OutboxSyncEngine {
         return { kind: "restore_transaction", transaction: tx };
       }
 
+      case "recurring.upsert": {
+        const ruleId = envelope.payload.ruleId ?? randomIdFallback();
+        const prev = await this.db.recurringRules.get(ruleId);
+        const prefs = await this.db.getPreferences();
+        const todayLocalDate = toLocalDate(this.now(), prefs.timezone);
+        const currency = normalizeCurrencyCode(envelope.payload.currency);
+        const amountMoney = createMoney(envelope.payload.amount, currency);
+        const nextDueLocalDate = computeInitialNextDueLocalDate(
+          {
+            frequency: envelope.payload.frequency,
+            ...(envelope.payload.dayOfMonth !== undefined
+              ? { dayOfMonth: envelope.payload.dayOfMonth }
+              : {}),
+            ...(envelope.payload.dayOfWeek !== undefined
+              ? { dayOfWeek: envelope.payload.dayOfWeek }
+              : {}),
+          },
+          todayLocalDate,
+        );
+
+        const next: LocalRecurringRule = {
+          id: ruleId,
+          kind: envelope.payload.kind,
+          accountId: envelope.payload.accountId,
+          categoryId: envelope.payload.categoryId ?? null,
+          amount: amountMoney.amount,
+          currency,
+          frequency: envelope.payload.frequency,
+          dayOfMonth: envelope.payload.dayOfMonth ?? null,
+          dayOfWeek: envelope.payload.dayOfWeek ?? null,
+          description: envelope.payload.description.trim(),
+          isActive: envelope.payload.isActive,
+          lastTriggeredLocalDate: prev?.lastTriggeredLocalDate ?? null,
+          nextDueLocalDate,
+          deletedAt: null,
+          updatedAt: nowIso,
+        };
+        await this.db.recurringRules.put(next);
+        return prev
+          ? { kind: "restore_recurring", rule: prev }
+          : { kind: "delete_recurring", ruleId };
+      }
+
+      case "recurring.delete": {
+        const prev = await this.db.recurringRules.get(envelope.payload.ruleId);
+        if (!prev) return null;
+        await this.db.recurringRules.put({
+          ...prev,
+          deletedAt: nowIso,
+          updatedAt: nowIso,
+        });
+        return { kind: "restore_recurring", rule: prev };
+      }
+
       default:
         return null;
     }
@@ -520,6 +576,14 @@ export class OutboxSyncEngine {
         await this.db.transactions.put(
           snapshot.transaction as LocalTransaction,
         );
+        break;
+      }
+      case "delete_recurring": {
+        await this.db.recurringRules.delete(String(snapshot.ruleId));
+        break;
+      }
+      case "restore_recurring": {
+        await this.db.recurringRules.put(snapshot.rule as LocalRecurringRule);
         break;
       }
     }

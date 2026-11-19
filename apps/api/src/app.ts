@@ -13,10 +13,12 @@ import type { AccountsService } from "./accounts/service.js";
 import type { AuthService } from "./auth/service.js";
 import type { CategoriesService } from "./categories/service.js";
 import type { CommandBus } from "./commands/bus.js";
+import type { RecurringService } from "./recurring/service.js";
 import { registerAccountRoutes } from "./routes/accounts.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerCommandRoutes } from "./routes/commands.js";
 import { type FxRateReader, registerFxRoutes } from "./routes/fx.js";
+import { registerRecurringRoutes } from "./routes/recurring.js";
 import { registerCategoryAndTransactionRoutes } from "./routes/transactions.js";
 import type { TransactionsService } from "./transactions/service.js";
 
@@ -30,6 +32,7 @@ export interface BuildAppOptions {
   accountsService?: AccountsService;
   categoriesService?: CategoriesService;
   transactionsService?: TransactionsService;
+  recurringService?: RecurringService;
   secureCookies?: boolean;
   onError?: (error: unknown, context: Record<string, unknown>) => void;
 }
@@ -182,6 +185,14 @@ export async function buildApp(
         ...(options.transactionsService
           ? { transactionsService: options.transactionsService }
           : {}),
+        ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
+      });
+    }
+
+    if (options.recurringService) {
+      registerRecurringRoutes(app, {
+        authService: options.authService,
+        recurringService: options.recurringService,
         ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
       });
     }

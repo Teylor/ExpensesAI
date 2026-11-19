@@ -96,7 +96,7 @@
   - `vite-plugin-pwa` (Workbox), almacenamiento local `Dexie.js`, ejecución optimista de comandos manuales offline y sync idempotente al reconectar.
 
 ### Seed 12 — Gastos e Ingresos Recurrentes (Nóminas, Suscripciones, Alquiler)
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia — Bloque 4 completado)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Reglas recurrentes (diaria, semanal, mensual día X, trimestral, anual) respetando zona horaria (incl. meses de 28/30/31 días).

@@ -8,6 +8,7 @@ import type {
   AgenticfOfflineDb,
   LocalAccount,
   LocalCategory,
+  LocalRecurringRule,
   LocalTransaction,
 } from "../offline/db.js";
 import {
@@ -186,7 +187,7 @@ export async function hydrateOfflineDbFromServer(
 ): Promise<void> {
   const nowIso = new Date().toISOString();
 
-  const [accRes, catRes, txRes, fxRes] = await Promise.allSettled([
+  const [accRes, catRes, txRes, recRes, fxRes] = await Promise.allSettled([
     fetch(`${baseUrl}/api/v1/accounts?includeArchived=true`, {
       credentials: "include",
     }),
@@ -194,6 +195,7 @@ export async function hydrateOfflineDbFromServer(
     fetch(`${baseUrl}/api/v1/transactions?limit=200`, {
       credentials: "include",
     }),
+    fetch(`${baseUrl}/api/v1/recurring`, { credentials: "include" }),
     fetch(`${baseUrl}/api/v1/fx/latest`, { credentials: "include" }),
   ]);
 
@@ -257,8 +259,35 @@ export async function hydrateOfflineDbFromServer(
     );
   }
 
+  if (recRes.status === "fulfilled" && recRes.value.ok) {
+    const body = (await recRes.value.json()) as {
+      rules: Array<Omit<LocalRecurringRule, "deletedAt">>;
+    };
+    await db.recurringRules.bulkPut(
+      body.rules.map((r) => ({
+        ...r,
+        deletedAt: null,
+      })),
+    );
+  }
+
   if (fxRes.status === "fulfilled" && fxRes.value.ok) {
     const snapshot = (await fxRes.value.json()) as FxRateSnapshot;
     await db.saveFxSnapshot(snapshot);
+  }
+}
+
+export async function runDueRecurringRulesRemote(
+  baseUrl = "",
+): Promise<{ triggeredCount: number } | null> {
+  try {
+    const res = await fetch(`${baseUrl}/api/v1/recurring/run-due`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { triggeredCount: number };
+  } catch {
+    return null;
   }
 }

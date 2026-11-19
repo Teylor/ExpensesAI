@@ -43,6 +43,13 @@
       "when": 1795121922742,
       "tag": "0005_yummy_slapstick",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795123677185,
+      "tag": "0006_parched_millenium_guard",
+      "breakpoints": true
     }
   ]
 }

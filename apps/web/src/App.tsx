@@ -7,6 +7,8 @@ import {
   computeBalancesSummary,
   createMoney,
   DEFAULT_USER_PREFERENCES,
+  FINANCIAL_PERIODS,
+  type FinancialPeriod,
   type FxRateSnapshot,
   formatMoneyWithBase,
   type SupportedLocale,
@@ -17,6 +19,7 @@ import {
 import {
   ArrowLeftRight,
   Banknote,
+  CalendarClock,
   CloudOff,
   LogOut,
   Plus,
@@ -39,11 +42,13 @@ import {
   type PublicUserDto,
   patchUserPreferences,
   registerWithEmail,
+  runDueRecurringRulesRemote,
 } from "./api/client.js";
 import {
   createOfflineDb,
   type LocalAccount,
   type LocalCategory,
+  type LocalRecurringRule,
   type LocalTransaction,
 } from "./offline/db.js";
 import { OutboxSyncEngine } from "./offline/outbox.js";
@@ -79,6 +84,9 @@ export function App() {
   const [accounts, setAccounts] = useState<LocalAccount[]>([]);
   const [categories, setCategories] = useState<LocalCategory[]>([]);
   const [transactions, setTransactions] = useState<LocalTransaction[]>([]);
+  const [recurringRules, setRecurringRules] = useState<LocalRecurringRule[]>(
+    [],
+  );
   const [fxSnapshot, setFxSnapshot] = useState<FxRateSnapshot | undefined>(
     undefined,
   );
@@ -116,11 +124,19 @@ export function App() {
   const [activeScope, setActiveScope] = useState<CategoryScope>("expense");
   const [newCatName, setNewCatName] = useState("");
 
+  // Recurring form
+  const [recKind, setRecKind] = useState<"income" | "expense">("expense");
+  const [recFrequency, setRecFrequency] = useState<FinancialPeriod>("monthly");
+  const [recDayOfMonth, setRecDayOfMonth] = useState("1");
+  const [recAmount, setRecAmount] = useState("");
+  const [recDescription, setRecDescription] = useState("");
+
   const reloadLocalState = useCallback(async () => {
-    const [accs, cats, txs, fx, prefs, pending] = await Promise.all([
+    const [accs, cats, txs, recs, fx, prefs, pending] = await Promise.all([
       offlineDb.accounts.toArray(),
       offlineDb.categories.toArray(),
       offlineDb.transactions.toArray(),
+      offlineDb.recurringRules.toArray(),
       offlineDb.getLatestFxSnapshot(),
       offlineDb.getPreferences(),
       outboxEngine.getPendingCount(),
@@ -136,6 +152,11 @@ export function App() {
       txs
         .filter((tx) => tx.deletedAt === null)
         .sort((a, b) => b.occurredAtUtc.localeCompare(a.occurredAtUtc)),
+    );
+    setRecurringRules(
+      recs
+        .filter((r) => r.deletedAt === null)
+        .sort((a, b) => a.nextDueLocalDate.localeCompare(b.nextDueLocalDate)),
     );
     setFxSnapshot(fx ?? undefined);
     setPreferences(prefs);
@@ -374,6 +395,53 @@ export function App() {
       type: "transaction.delete",
       payload: { transactionId },
     });
+  };
+
+  const handleCreateRecurring = async (e: FormEvent) => {
+    e.preventDefault();
+    const targetAcc = accounts.find((a) => a.id === txAccountId) ?? accounts[0];
+    if (!targetAcc || !recAmount.trim() || !recDescription.trim()) return;
+
+    const dayNum = Number(recDayOfMonth);
+    await dispatchCommand({
+      commandId: generateUuid(),
+      actor: "manual",
+      issuedAtUtc: new Date().toISOString(),
+      type: "recurring.upsert",
+      payload: {
+        ruleId: generateUuid(),
+        kind: recKind,
+        accountId: targetAcc.id,
+        amount: recAmount.trim(),
+        currency: targetAcc.currency,
+        frequency: recFrequency,
+        ...(Number.isInteger(dayNum) && dayNum >= 1 && dayNum <= 31
+          ? { dayOfMonth: dayNum }
+          : {}),
+        description: recDescription.trim(),
+        isActive: true,
+      },
+    });
+    setRecAmount("");
+    setRecDescription("");
+  };
+
+  const handleDeleteRecurring = async (ruleId: string) => {
+    await dispatchCommand({
+      commandId: generateUuid(),
+      actor: "manual",
+      issuedAtUtc: new Date().toISOString(),
+      type: "recurring.delete",
+      payload: { ruleId },
+    });
+  };
+
+  const handleRunDueRecurring = async () => {
+    if (!isOnline || !user) return;
+    await outboxEngine.syncPending();
+    await runDueRecurringRulesRemote();
+    await hydrateOfflineDbFromServer(offlineDb);
+    await reloadLocalState();
   };
 
   const balancesSummary = computeBalancesSummary(
@@ -972,6 +1040,159 @@ export function App() {
                 </form>
               </section>
             </div>
+
+            {/* Recurring Rules Section */}
+            <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 text-base font-semibold">
+                  <CalendarClock className="h-4 w-4 text-emerald-400" />
+                  <span>
+                    Recurrentes (Nómina, Alquiler, Suscripciones · MultiHora)
+                  </span>
+                </h2>
+                {user && isOnline && (
+                  <button
+                    type="button"
+                    onClick={() => void handleRunDueRecurring()}
+                    className="rounded-lg bg-zinc-800 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-zinc-700"
+                  >
+                    Ejecutar vencidas ahora
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                {recurringRules.length === 0 ? (
+                  <p className="text-xs text-zinc-500">
+                    Programa tu nómina, alquiler o suscripciones recurrentes.
+                  </p>
+                ) : (
+                  recurringRules.map((rule) => {
+                    const formatted = formatMoneyWithBase(
+                      createMoney(rule.amount, rule.currency),
+                      preferences.baseCurrency,
+                      undefined,
+                      {
+                        thousandsSeparator: preferences.thousandsSeparator,
+                        decimalSeparator: preferences.decimalSeparator,
+                        symbolPosition: preferences.symbolPosition,
+                      },
+                    );
+                    return (
+                      <div
+                        key={rule.id}
+                        className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-950/60 px-3.5 py-2.5"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">
+                            {rule.description}
+                          </p>
+                          <p className="text-xs text-zinc-400">
+                            {rule.frequency} · Próx: {rule.nextDueLocalDate}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={`text-sm font-semibold ${
+                              rule.kind === "income"
+                                ? "text-emerald-400"
+                                : "text-rose-400"
+                            }`}
+                          >
+                            {rule.kind === "expense" ? "-" : "+"}
+                            {formatted}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label={`Eliminar regla ${rule.description}`}
+                            onClick={() => void handleDeleteRecurring(rule.id)}
+                            className="text-zinc-500 hover:text-rose-400"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <form
+                onSubmit={(e) => void handleCreateRecurring(e)}
+                className="mt-4 grid gap-2 border-t border-zinc-800/80 pt-4 sm:grid-cols-6"
+              >
+                <select
+                  aria-label="Tipo recurrente"
+                  value={recKind}
+                  onChange={(e) =>
+                    setRecKind(e.target.value as "income" | "expense")
+                  }
+                  className="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
+                >
+                  <option value="expense">
+                    {t(locale, "transaction.type.expense")}
+                  </option>
+                  <option value="income">
+                    {t(locale, "transaction.type.income")}
+                  </option>
+                </select>
+
+                <input
+                  type="text"
+                  required
+                  placeholder="Concepto (ej. Nómina / Netflix)"
+                  aria-label="Concepto recurrente"
+                  value={recDescription}
+                  onChange={(e) => setRecDescription(e.target.value)}
+                  className="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs sm:col-span-2"
+                />
+
+                <input
+                  type="text"
+                  required
+                  placeholder="Importe"
+                  aria-label="Importe recurrente"
+                  value={recAmount}
+                  onChange={(e) => setRecAmount(e.target.value)}
+                  className="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
+                />
+
+                <select
+                  aria-label="Frecuencia"
+                  value={recFrequency}
+                  onChange={(e) =>
+                    setRecFrequency(e.target.value as FinancialPeriod)
+                  }
+                  className="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
+                >
+                  {FINANCIAL_PERIODS.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex gap-1.5">
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    placeholder="Día"
+                    aria-label="Día del mes"
+                    value={recDayOfMonth}
+                    onChange={(e) => setRecDayOfMonth(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
+                  />
+                  <button
+                    type="submit"
+                    aria-label="Añadir regla recurrente"
+                    className="rounded-lg bg-emerald-500 px-3 py-1.5 text-zinc-950 hover:bg-emerald-400"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              </form>
+            </section>
           </div>
         )}
       </main>

@@ -3,6 +3,7 @@ import {
   type CategoryScope,
   type CommandEnvelope,
   DEFAULT_USER_PREFERENCES,
+  type FinancialPeriod,
   type FxRateSnapshot,
   type TransactionSource,
   type UserPreferences,
@@ -50,6 +51,24 @@ export interface LocalTransaction {
   deletedAt: string | null;
 }
 
+export interface LocalRecurringRule {
+  id: string;
+  kind: "income" | "expense";
+  accountId: string;
+  categoryId: string | null;
+  amount: string;
+  currency: string;
+  frequency: FinancialPeriod;
+  dayOfMonth: number | null;
+  dayOfWeek: number | null;
+  description: string;
+  isActive: boolean;
+  lastTriggeredLocalDate: string | null;
+  nextDueLocalDate: string;
+  deletedAt: string | null;
+  updatedAt: string;
+}
+
 export type OutboxItemStatus = "pending" | "syncing" | "synced" | "failed";
 
 export interface OutboxEntry {
@@ -72,6 +91,7 @@ export class AgenticfOfflineDb extends Dexie {
   accounts!: Table<LocalAccount, string>;
   categories!: Table<LocalCategory, string>;
   transactions!: Table<LocalTransaction, string>;
+  recurringRules!: Table<LocalRecurringRule, string>;
   outbox!: Table<OutboxEntry, string>;
   kv!: Table<StoredKvRow, string>;
 
@@ -82,6 +102,8 @@ export class AgenticfOfflineDb extends Dexie {
       categories: "id, scope, name, deletedAt",
       transactions:
         "id, kind, accountId, destinationAccountId, categoryId, localDate, occurredAtUtc, deletedAt",
+      recurringRules:
+        "id, kind, accountId, isActive, nextDueLocalDate, deletedAt",
       outbox: "commandId, status, enqueuedAt",
       kv: "key",
     });
@@ -119,12 +141,20 @@ export class AgenticfOfflineDb extends Dexie {
   async clearLocalUserData(): Promise<void> {
     await this.transaction(
       "rw",
-      [this.accounts, this.categories, this.transactions, this.outbox, this.kv],
+      [
+        this.accounts,
+        this.categories,
+        this.transactions,
+        this.recurringRules,
+        this.outbox,
+        this.kv,
+      ],
       async () => {
         await Promise.all([
           this.accounts.clear(),
           this.categories.clear(),
           this.transactions.clear(),
+          this.recurringRules.clear(),
           this.outbox.clear(),
           this.kv.clear(),
         ]);
