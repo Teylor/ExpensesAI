@@ -38,6 +38,7 @@
 - **Analítica y Ahorro:** Cálculo de gasto e ingreso **diario, semanal, mensual, trimestral y anual**, junto con **cálculo de ahorro** neto y tasa de ahorro.
 - **Inversiones (V1 manual/asistida):** Ver y modificar posiciones (crypto, acciones, ETFs, fondos, etc.) sin feeds de precios en tiempo real en V1.
 - **Patrimonio Neto (*Net Worth*):** Activos no líquidos (casas, coches, cartas/coleccionables, etc.) y pasivos/deudas (hipotecas, préstamos) que suman/restan al patrimonio neto.
+- **Catálogos 100% Editables por Usuario:** Todas las categorías (`income`, `expense`, `investment`, `networth`) parten de una lista inicial de presets traducidos (`ES`/`EN`), pero cada usuario puede añadir, renombrar o eliminar cualquiera (incluido quitar presets por defecto como `etf`), tanto desde la UI como mediante el agente (`category.upsert`, `category.delete`).
 - **Exportaciones:** Exportación a **CSV** (cuentas, movimientos, inversiones y patrimonio).
 - **Offline-First (PWA):** IndexedDB local (`Dexie.js`) + Cola de Comandos (`Outbox`) propia con sincronización automática e idempotente al recuperar conexión.
 

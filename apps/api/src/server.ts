@@ -1,4 +1,6 @@
 import { buildApp } from "./app.js";
+import { AuthService, PostgresAuthRepository } from "./auth/service.js";
+import { CommandBus, PostgresCommandLogRepository } from "./commands/bus.js";
 import { loadEnvFilesIfPresent, parseEnv } from "./config/env.js";
 import { createDbClient } from "./db/client.js";
 import { createDefaultFxProvider } from "./fx/providers.js";
@@ -26,6 +28,12 @@ async function start(): Promise<void> {
   });
 
   const dbClient = createDbClient(env.DATABASE_URL);
+  const authService = new AuthService({
+    repository: new PostgresAuthRepository(dbClient),
+  });
+  const commandBus = new CommandBus({
+    repository: new PostgresCommandLogRepository(dbClient),
+  });
   const fxService = new FxService({
     repository: new PostgresFxRatesRepository(dbClient),
     provider: createDefaultFxProvider(),
@@ -41,6 +49,9 @@ async function start(): Promise<void> {
     logLevel: env.LOG_LEVEL,
     checkDatabase: dbClient.pingDatabase,
     fxRateReader: fxService,
+    authService,
+    commandBus,
+    secureCookies: env.NODE_ENV === "production",
     onError: captureExceptionSafe,
   });
 

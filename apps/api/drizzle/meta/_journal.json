@@ -15,6 +15,20 @@
       "when": 1795119408135,
       "tag": "0001_green_oracle",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795120068256,
+      "tag": "0002_good_black_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795120646573,
+      "tag": "0003_amusing_silver_centurion",
+      "breakpoints": true
     }
   ]
 }

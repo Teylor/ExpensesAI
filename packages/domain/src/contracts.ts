@@ -12,7 +12,7 @@ export const TRANSACTION_SOURCES = [
 ] as const;
 export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
-/** Tipos de cuenta financiera soportados en V1. */
+/** Tipos base de cuenta financiera soportados en V1. */
 export const ACCOUNT_TYPES = ["bank", "cash", "savings", "credit"] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 

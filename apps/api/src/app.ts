@@ -1,4 +1,5 @@
 import { DOMAIN_CONTRACT_VERSION } from "@agenticf/domain";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -8,6 +9,10 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import type { AuthService } from "./auth/service.js";
+import type { CommandBus } from "./commands/bus.js";
+import { registerAuthRoutes } from "./routes/auth.js";
+import { registerCommandRoutes } from "./routes/commands.js";
 import { type FxRateReader, registerFxRoutes } from "./routes/fx.js";
 
 export interface BuildAppOptions {
@@ -15,6 +20,9 @@ export interface BuildAppOptions {
   logLevel?: "fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent";
   checkDatabase: () => Promise<boolean>;
   fxRateReader?: FxRateReader;
+  authService?: AuthService;
+  commandBus?: CommandBus;
+  secureCookies?: boolean;
   onError?: (error: unknown, context: Record<string, unknown>) => void;
 }
 
@@ -35,6 +43,8 @@ export async function buildApp(
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+
+  await app.register(cookie);
 
   await app.register(helmet, {
     contentSecurityPolicy: false,
@@ -121,6 +131,20 @@ export async function buildApp(
 
   if (options.fxRateReader) {
     registerFxRoutes(app, options.fxRateReader);
+  }
+
+  if (options.authService) {
+    registerAuthRoutes(app, {
+      authService: options.authService,
+      secureCookies: options.secureCookies ?? true,
+    });
+
+    if (options.commandBus) {
+      registerCommandRoutes(app, {
+        authService: options.authService,
+        commandBus: options.commandBus,
+      });
+    }
   }
 
   return app;
