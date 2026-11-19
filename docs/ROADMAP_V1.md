@@ -34,7 +34,7 @@
 ## Bloque 2: Núcleo de Dominio Financiero, Multimoneda, MultiHora e i18n
 
 ### Seed 04 — Motor de Dinero (`decimal.js`), Formateo Configurable (`.` / `,`) y Paréntesis Multimoneda
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **100% Strict TDD**.
 - **Alcance:**
   - Aritmética decimal exacta en `packages/domain` (0 floats).

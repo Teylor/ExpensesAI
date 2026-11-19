@@ -18,3 +18,5 @@ export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 /** Versión de contrato del dominio compartido. */
 export const DOMAIN_CONTRACT_VERSION = "0.1.0" as const;
+
+export * from "./money/index.js";
