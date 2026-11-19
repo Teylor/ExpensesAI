@@ -59,7 +59,7 @@
 ## Bloque 3: Identidad, Seguridad de Credenciales y Motor de Comandos + Undo
 
 ### Seed 07 — Autenticación Email+Password, Sesiones Stateless & Preferencias
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Registro/login con `@node-rs/argon2`, cookies `HttpOnly` con sesión en PostgreSQL, rate-limit en endpoints sensibles.
