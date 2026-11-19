@@ -11,11 +11,14 @@ import {
 } from "fastify-type-provider-zod";
 import type { AccountsService } from "./accounts/service.js";
 import type { AuthService } from "./auth/service.js";
+import type { CategoriesService } from "./categories/service.js";
 import type { CommandBus } from "./commands/bus.js";
 import { registerAccountRoutes } from "./routes/accounts.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerCommandRoutes } from "./routes/commands.js";
 import { type FxRateReader, registerFxRoutes } from "./routes/fx.js";
+import { registerCategoryAndTransactionRoutes } from "./routes/transactions.js";
+import type { TransactionsService } from "./transactions/service.js";
 
 export interface BuildAppOptions {
   corsOrigin: string;
@@ -25,6 +28,8 @@ export interface BuildAppOptions {
   authService?: AuthService;
   commandBus?: CommandBus;
   accountsService?: AccountsService;
+  categoriesService?: CategoriesService;
+  transactionsService?: TransactionsService;
   secureCookies?: boolean;
   onError?: (error: unknown, context: Record<string, unknown>) => void;
 }
@@ -137,9 +142,20 @@ export async function buildApp(
   }
 
   if (options.authService) {
+    const categoriesService = options.categoriesService;
     registerAuthRoutes(app, {
       authService: options.authService,
       secureCookies: options.secureCookies ?? true,
+      ...(categoriesService
+        ? {
+            onUserRegistered: async (userId, preferences) => {
+              await categoriesService.seedDefaultCategories(
+                userId,
+                preferences.locale,
+              );
+            },
+          }
+        : {}),
     });
 
     if (options.commandBus) {
@@ -153,6 +169,19 @@ export async function buildApp(
       registerAccountRoutes(app, {
         authService: options.authService,
         accountsService: options.accountsService,
+        ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
+      });
+    }
+
+    if (options.categoriesService || options.transactionsService) {
+      registerCategoryAndTransactionRoutes(app, {
+        authService: options.authService,
+        ...(options.categoriesService
+          ? { categoriesService: options.categoriesService }
+          : {}),
+        ...(options.transactionsService
+          ? { transactionsService: options.transactionsService }
+          : {}),
         ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
       });
     }

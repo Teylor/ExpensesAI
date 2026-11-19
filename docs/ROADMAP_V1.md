@@ -83,7 +83,7 @@
   - CRUD de cuentas en cualquier moneda, cálculo de **Saldo por Cuenta**, **Saldo en Efectivo** y **Saldo Total** en moneda principal (con paréntesis multimoneda).
 
 ### Seed 10 — Ingresos, Gastos, Categorías & Transferencias entre Cuentas
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Gestión de ingresos/gastos con tipo y categoría, transferencias entre cuentas propias (sin inflar gastos ni ingresos).

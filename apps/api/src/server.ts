@@ -5,6 +5,11 @@ import {
 } from "./accounts/service.js";
 import { buildApp } from "./app.js";
 import { AuthService, PostgresAuthRepository } from "./auth/service.js";
+import {
+  CategoriesService,
+  PostgresCategoriesRepository,
+  registerCategoryCommandHandlers,
+} from "./categories/service.js";
 import { CommandBus, PostgresCommandLogRepository } from "./commands/bus.js";
 import { loadEnvFilesIfPresent, parseEnv } from "./config/env.js";
 import { createDbClient } from "./db/client.js";
@@ -20,6 +25,11 @@ import {
   flushSentry,
   initSentry,
 } from "./observability/sentry.js";
+import {
+  PostgresTransactionsRepository,
+  registerTransactionCommandHandlers,
+  TransactionsService,
+} from "./transactions/service.js";
 
 async function start(): Promise<void> {
   loadEnvFilesIfPresent();
@@ -39,15 +49,27 @@ async function start(): Promise<void> {
   const commandBus = new CommandBus({
     repository: new PostgresCommandLogRepository(dbClient),
   });
+  const accountsRepository = new PostgresAccountsRepository(dbClient);
   const accountsService = new AccountsService({
-    repository: new PostgresAccountsRepository(dbClient),
+    repository: accountsRepository,
   });
-  registerAccountCommandHandlers(commandBus, accountsService);
+  const categoriesService = new CategoriesService({
+    repository: new PostgresCategoriesRepository(dbClient),
+  });
   const fxService = new FxService({
     repository: new PostgresFxRatesRepository(dbClient),
     provider: createDefaultFxProvider(),
     advisoryLock: new PostgresAdvisoryLock(dbClient),
   });
+  const transactionsService = new TransactionsService({
+    repository: new PostgresTransactionsRepository(dbClient),
+    accountsRepository,
+    getUserPreferences: (userId) => authService.getUserPreferences(userId),
+    fxRateReader: fxService,
+  });
+  registerAccountCommandHandlers(commandBus, accountsService);
+  registerCategoryCommandHandlers(commandBus, categoriesService);
+  registerTransactionCommandHandlers(commandBus, transactionsService);
   const fxScheduler = startFxDailyScheduler({
     fxService,
     onError: captureExceptionSafe,
@@ -61,6 +83,8 @@ async function start(): Promise<void> {
     authService,
     commandBus,
     accountsService,
+    categoriesService,
+    transactionsService,
     secureCookies: env.NODE_ENV === "production",
     onError: captureExceptionSafe,
   });
