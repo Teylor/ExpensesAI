@@ -48,7 +48,7 @@
   - Infraestructura multiidioma preparada con diccionarios completos `es` y `en` compartidos.
 
 ### Seed 06 — Servicio Gratuito de Divisas (FX Engine + Cache Offline/BD)
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia — Bloque 2 completado)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Adaptador `Frankfurter API` (BCE) + fallback `exchange-api` (CDN).

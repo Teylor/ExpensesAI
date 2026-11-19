@@ -44,6 +44,9 @@ importers:
       '@sentry/node':
         specifier: ^11.15.0
         version: 11.15.0
+      croner:
+        specifier: ^11.0.1
+        version: 11.0.1
       drizzle-orm:
         specifier: ^0.45.4
         version: 0.45.4(@opentelemetry/api@1.10.0)(postgres@4.1.1)
@@ -1112,6 +1115,10 @@ packages:
   cookie@2.0.2:
     resolution: {integrity: sha512-SL0cVuEdETEp7pN0FuZb01toc3vnODEfVUCooxG1SJN0yIirh7JMb9X9bvfCFf0vzzbT68RdbKDHYTiWy7a7iw==}
     engines: {node: '>=22'}
+
+  croner@11.0.1:
+    resolution: {integrity: sha512-/fmHcoczPy5cMcmJ6ex7J7LAwb545V1dNmRrdDGP3hwStg/06IYP56YgBySCSdWGDz2PJYQyDukaR8b8R5o2HA==}
+    engines: {node: '>=18.0'}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -2488,6 +2495,8 @@ snapshots:
   chai@6.3.0: {}
 
   cookie@2.0.2: {}
+
+  croner@11.0.1: {}
 
   debug@4.4.3:
     dependencies:
