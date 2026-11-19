@@ -41,7 +41,7 @@
   - Formateador configurable (`.` / `,`) y renderizado dual `2.000,00 $ (1.819,32 €)` para divisas distintas a la principal (JPY 0 dec., EUR/USD 2 dec., crypto hasta 8 dec.).
 
 ### Seed 05 — Motor MultiHora (Timezones) + i18n (`ES` / `EN`)
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Conversión determinista UTC ↔ `localDate` según zona horaria del usuario (incluyendo cambios horario/DST).
