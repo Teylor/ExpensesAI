@@ -10,19 +10,29 @@ import { financialPeriodSchema } from "../time/schemas.js";
 export const COMMAND_ACTORS = ["manual", "agent", "system"] as const;
 export type CommandActor = (typeof COMMAND_ACTORS)[number];
 
-export const INVESTMENT_ASSET_TYPES = [
+/** Ámbitos de categorías 100% editables por cada usuario (añadir, renombrar o eliminar presets). */
+export const CATEGORY_SCOPES = [
+  "income",
+  "expense",
+  "investment",
+  "networth",
+] as const;
+export type CategoryScope = (typeof CATEGORY_SCOPES)[number];
+
+/** Presets iniciales editables para tipos de inversión (el usuario puede añadir, editar o eliminar cualquiera). */
+export const DEFAULT_INVESTMENT_ASSET_TYPES = [
   "crypto",
   "stocks",
   "etf",
   "funds",
   "other",
 ] as const;
-export type InvestmentAssetType = (typeof INVESTMENT_ASSET_TYPES)[number];
 
 export const NET_WORTH_KINDS = ["asset", "liability"] as const;
 export type NetWorthKind = (typeof NET_WORTH_KINDS)[number];
 
-export const NET_WORTH_CATEGORIES = [
+/** Presets iniciales editables para categorías de patrimonio (el usuario puede añadir, editar o eliminar cualquiera). */
+export const DEFAULT_NET_WORTH_CATEGORIES = [
   "real_estate",
   "vehicle",
   "collectibles_cards",
@@ -30,7 +40,8 @@ export const NET_WORTH_CATEGORIES = [
   "loan",
   "other",
 ] as const;
-export type NetWorthCategory = (typeof NET_WORTH_CATEGORIES)[number];
+
+const editableCategoryNameSchema = z.string().trim().min(1).max(60);
 
 const commandMetaFields = {
   commandId: z.uuid(),
@@ -113,7 +124,7 @@ const recurringUpsertPayloadSchema = z.object({
 
 const investmentUpsertPayloadSchema = z.object({
   investmentId: z.uuid().optional(),
-  assetType: z.enum(INVESTMENT_ASSET_TYPES),
+  assetType: editableCategoryNameSchema,
   name: z.string().trim().min(1).max(120),
   symbol: z.string().trim().min(1).max(20).optional(),
   quantity: positiveDecimalStringSchema.optional(),
@@ -125,10 +136,22 @@ const investmentUpsertPayloadSchema = z.object({
 const netWorthUpsertPayloadSchema = z.object({
   itemId: z.uuid().optional(),
   kind: z.enum(NET_WORTH_KINDS),
-  category: z.enum(NET_WORTH_CATEGORIES),
+  category: editableCategoryNameSchema,
   name: z.string().trim().min(1).max(120),
   estimatedValue: positiveDecimalStringSchema,
   currency: currencyCodeSchema,
+});
+
+const categoryUpsertPayloadSchema = z.object({
+  categoryId: z.uuid().optional(),
+  scope: z.enum(CATEGORY_SCOPES),
+  name: editableCategoryNameSchema,
+  icon: z.string().trim().min(1).max(40).optional(),
+  color: z.string().trim().min(1).max(32).optional(),
+});
+
+const categoryDeletePayloadSchema = z.object({
+  categoryId: z.uuid(),
 });
 
 const commandUndoPayloadSchema = z.object({
@@ -180,6 +203,16 @@ export const commandEnvelopeSchema = z.discriminatedUnion("type", [
     ...commandMetaFields,
     type: z.literal("networth.upsert"),
     payload: netWorthUpsertPayloadSchema,
+  }),
+  z.object({
+    ...commandMetaFields,
+    type: z.literal("category.upsert"),
+    payload: categoryUpsertPayloadSchema,
+  }),
+  z.object({
+    ...commandMetaFields,
+    type: z.literal("category.delete"),
+    payload: categoryDeletePayloadSchema,
   }),
   z.object({
     ...commandMetaFields,

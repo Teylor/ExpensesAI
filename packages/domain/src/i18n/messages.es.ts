@@ -3,6 +3,7 @@ export const messagesEs = {
   "account.type.cash": "Efectivo",
   "account.type.savings": "Ahorro",
   "account.type.credit": "Crédito",
+  "account.type.other": "Otra",
 
   "transaction.type.income": "Ingreso",
   "transaction.type.expense": "Gasto",

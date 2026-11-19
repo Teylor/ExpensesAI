@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  CATEGORY_SCOPES,
   COMMAND_ACTORS,
   commandBatchRequestSchema,
   commandEnvelopeSchema,
+  DEFAULT_INVESTMENT_ASSET_TYPES,
+  DEFAULT_NET_WORTH_CATEGORIES,
 } from "./catalog.js";
 
 const BASE_META = {
@@ -138,5 +141,63 @@ describe("Command catalog Zod schemas", () => {
       ],
     });
     expect(batch.commands).toHaveLength(1);
+  });
+
+  it("allows fully editable custom categories and presets (add, rename, or remove items like etf)", () => {
+    expect(DEFAULT_INVESTMENT_ASSET_TYPES).toContain("etf");
+    expect(DEFAULT_NET_WORTH_CATEGORIES).toContain("collectibles_cards");
+    expect(CATEGORY_SCOPES).toEqual([
+      "income",
+      "expense",
+      "investment",
+      "networth",
+    ]);
+
+    const customInvestment = commandEnvelopeSchema.parse({
+      ...BASE_META,
+      type: "investment.upsert",
+      payload: {
+        assetType: "Crowdlending",
+        name: "Proyecto Solar",
+        investedAmount: "1000",
+        currentValue: "1080",
+        currency: "EUR",
+      },
+    });
+    expect(customInvestment.type).toBe("investment.upsert");
+
+    const customNetWorth = commandEnvelopeSchema.parse({
+      ...BASE_META,
+      type: "networth.upsert",
+      payload: {
+        kind: "asset",
+        category: "Relojes",
+        name: "Reloj vintage",
+        estimatedValue: "2200",
+        currency: "EUR",
+      },
+    });
+    expect(customNetWorth.type).toBe("networth.upsert");
+
+    expect(
+      commandEnvelopeSchema.parse({
+        ...BASE_META,
+        type: "category.upsert",
+        payload: {
+          scope: "investment",
+          name: "Crowdlending",
+        },
+      }).type,
+    ).toBe("category.upsert");
+
+    expect(
+      commandEnvelopeSchema.parse({
+        ...BASE_META,
+        type: "category.delete",
+        payload: {
+          categoryId: "55555555-5555-4555-8555-555555555555",
+        },
+      }).type,
+    ).toBe("category.delete");
   });
 });

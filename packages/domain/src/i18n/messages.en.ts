@@ -5,6 +5,7 @@ export const messagesEn: MessageCatalog = {
   "account.type.cash": "Cash",
   "account.type.savings": "Savings",
   "account.type.credit": "Credit",
+  "account.type.other": "Other",
 
   "transaction.type.income": "Income",
   "transaction.type.expense": "Expense",
