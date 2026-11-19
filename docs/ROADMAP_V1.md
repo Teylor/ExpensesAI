@@ -34,21 +34,21 @@
 ## Bloque 2: Núcleo de Dominio Financiero, Multimoneda, MultiHora e i18n
 
 ### Seed 04 — Motor de Dinero (`decimal.js`), Formateo Configurable (`.` / `,`) y Paréntesis Multimoneda
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **100% Strict TDD**.
 - **Alcance:**
   - Aritmética decimal exacta en `packages/domain` (0 floats).
   - Formateador configurable (`.` / `,`) y renderizado dual `2.000,00 $ (1.819,32 €)` para divisas distintas a la principal (JPY 0 dec., EUR/USD 2 dec., crypto hasta 8 dec.).
 
 ### Seed 05 — Motor MultiHora (Timezones) + i18n (`ES` / `EN`)
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Conversión determinista UTC ↔ `localDate` según zona horaria del usuario (incluyendo cambios horario/DST).
   - Infraestructura multiidioma preparada con diccionarios completos `es` y `en` compartidos.
 
 ### Seed 06 — Servicio Gratuito de Divisas (FX Engine + Cache Offline/BD)
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia — Bloque 2 completado)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Adaptador `Frankfurter API` (BCE) + fallback `exchange-api` (CDN).

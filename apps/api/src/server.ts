@@ -1,6 +1,13 @@
 import { buildApp } from "./app.js";
 import { loadEnvFilesIfPresent, parseEnv } from "./config/env.js";
 import { createDbClient } from "./db/client.js";
+import { createDefaultFxProvider } from "./fx/providers.js";
+import { startFxDailyScheduler } from "./fx/scheduler.js";
+import {
+  FxService,
+  PostgresAdvisoryLock,
+  PostgresFxRatesRepository,
+} from "./fx/service.js";
 import {
   captureExceptionSafe,
   flushSentry,
@@ -19,10 +26,21 @@ async function start(): Promise<void> {
   });
 
   const dbClient = createDbClient(env.DATABASE_URL);
+  const fxService = new FxService({
+    repository: new PostgresFxRatesRepository(dbClient),
+    provider: createDefaultFxProvider(),
+    advisoryLock: new PostgresAdvisoryLock(dbClient),
+  });
+  const fxScheduler = startFxDailyScheduler({
+    fxService,
+    onError: captureExceptionSafe,
+  });
+
   const app = await buildApp({
     corsOrigin: env.CORS_ORIGIN,
     logLevel: env.LOG_LEVEL,
     checkDatabase: dbClient.pingDatabase,
+    fxRateReader: fxService,
     onError: captureExceptionSafe,
   });
 
@@ -34,6 +52,7 @@ async function start(): Promise<void> {
     shuttingDown = true;
     app.log.info({ signal }, "Graceful shutdown initiated");
     try {
+      fxScheduler.stop();
       await app.close();
       await dbClient.close();
       await flushSentry();

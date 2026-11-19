@@ -8,11 +8,13 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import { type FxRateReader, registerFxRoutes } from "./routes/fx.js";
 
 export interface BuildAppOptions {
   corsOrigin: string;
   logLevel?: "fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent";
   checkDatabase: () => Promise<boolean>;
+  fxRateReader?: FxRateReader;
   onError?: (error: unknown, context: Record<string, unknown>) => void;
 }
 
@@ -116,6 +118,10 @@ export async function buildApp(
       database: "up",
     });
   });
+
+  if (options.fxRateReader) {
+    registerFxRoutes(app, options.fxRateReader);
+  }
 
   return app;
 }
