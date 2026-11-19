@@ -1,0 +1,11 @@
+pre-push:
+  parallel: false
+  commands:
+    typecheck:
+      run: pnpm typecheck
+    lint:
+      run: pnpm lint
+    test:
+      run: pnpm test
+    secrets:
+      run: pnpm security:secrets

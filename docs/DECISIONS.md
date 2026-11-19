@@ -55,3 +55,4 @@
 - **Voz Push-to-Talk:** `Web Speech API` nativa (0 €), con degradación limpia a chat de texto.
 - **Calidad, Seguridad y Errores:** Biome, Vitest, Playwright, Lefthook (bloqueo pre-push), Sentry Developer / GlitchTip compatible (con *scrubbing* financiero), AES-256-GCM para secretos en BD, Gitleaks + `pnpm audit` + Semgrep OSS en GitHub Actions.
 - **Metodología:** ODD + Conditional TDD en `C:\Users\teylo\ODD`.
+- **Estrategia Git:** **1 rama por Bloque** (`block/XX-<slug>`) y **1 commit atómico por Seed** al hacer `/odd-harvest` (Conventional Commits: `<type>(seed-XX): <resumen>`), integrando cada Bloque completo en `main`.

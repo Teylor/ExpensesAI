@@ -1,0 +1,26 @@
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle /health {
+		reverse_proxy api:3000
+	}
+
+	handle /ready {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		respond "AgenticF API ready (PWA web bundle will be wired in Seed 11/16)" 200
+	}
+}

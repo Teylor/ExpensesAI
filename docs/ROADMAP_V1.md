@@ -16,14 +16,14 @@
   - Inicializar Git + `pnpm` workspaces + `Turborepo` (`packages/domain`, `apps/api`, `apps/web`).
 
 ### Seed 02 — Quality Gates, Lefthook Pre-Push & Seguridad en CI
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** `[TDD-SKIP]` en configs + test canario en Vitest y validación real de hooks/CI.
 - **Alcance:**
   - Biome (lint + format), Vitest workspace, Lefthook `pre-push` bloqueante (`typecheck` + `lint` + `test` + `gitleaks`).
   - Workflow GitHub Actions (`pnpm audit`, Gitleaks, Semgrep OSS).
 
 ### Seed 03 — Docker Stateless + PostgreSQL 17 + Drizzle ORM + Sentry
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia — Bloque 1 completado)*
 - **Modo TDD:** **Strict TDD** en `/health`, `/ready` y filtro de *scrubbing* de datos financieros/secretos en Sentry; `[TDD-SKIP]` en Dockerfiles/compose.
 - **Alcance:**
   - `docker/compose.dev.yml` y base `docker/compose.nas.yml` (Caddy proxy).
