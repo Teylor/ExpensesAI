@@ -66,7 +66,7 @@
   - Preferencias de usuario (moneda principal, timezone, idioma `es`/`en`, formato `.`/`,`, confirmación previa del agente ON/OFF).
 
 ### Seed 08 — Motor de Comandos (`CommandBus`), Simulador de Impacto & `Undo` Global
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia — Bloque 3 completado)*
 - **Modo TDD:** **100% Strict TDD**.
 - **Alcance:**
   - Contrato único de Comandos Zod compartidos UI ↔ Agente, idempotencia por `commandId` (UUIDv7) en `command_log`.

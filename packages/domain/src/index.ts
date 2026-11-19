@@ -1,3 +1,4 @@
+export * from "./commands/index.js";
 export * from "./contracts.js";
 export * from "./fx/index.js";
 export * from "./i18n/index.js";
