@@ -4,7 +4,11 @@ import {
   SUPPORTED_LOCALES,
 } from "@agenticf/domain";
 
-/** Metadatos base de la PWA offline-first (ampliada con React + Vite en Seeds posteriores). */
+export * from "./api/client.js";
+export * from "./offline/db.js";
+export * from "./offline/outbox.js";
+
+/** Metadatos base de la PWA offline-first (React 19 + Vite + Workbox + Dexie.js + Outbox). */
 export const WEB_BOOTSTRAP_INFO = {
   app: "agenticf-web",
   pwaOfflineFirst: true,

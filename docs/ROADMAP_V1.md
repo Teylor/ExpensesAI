@@ -90,7 +90,7 @@
   - Campos `source` (`manual | agent | recurring | csv_import | bank_sync`) y `externalId` preparados para V2 + botón de Undo inmediato.
 
 ### Seed 11 — PWA Offline-First: IndexedDB (`Dexie.js`) + Cola `Outbox` & Sincronización
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD** en la máquina de estados de la cola `Outbox`.
 - **Alcance:**
   - `vite-plugin-pwa` (Workbox), almacenamiento local `Dexie.js`, ejecución optimista de comandos manuales offline y sync idempotente al reconectar.
