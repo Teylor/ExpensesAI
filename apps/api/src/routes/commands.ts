@@ -5,6 +5,7 @@ import {
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
+import { AccountNotFoundError } from "../accounts/service.js";
 import type { AuthService } from "../auth/service.js";
 import {
   CommandAlreadyUndoneError,
@@ -62,6 +63,12 @@ export function registerCommandRoutes(
             message: error.message,
           });
         }
+        if (error instanceof AccountNotFoundError) {
+          return reply.code(404).send({
+            error: "ACCOUNT_NOT_FOUND",
+            message: error.message,
+          });
+        }
         if (error instanceof CommandAlreadyUndoneError) {
           return reply.code(409).send({
             error: "COMMAND_ALREADY_UNDONE",
@@ -103,6 +110,12 @@ export function registerCommandRoutes(
             message: error.message,
           });
         }
+        if (error instanceof AccountNotFoundError) {
+          return reply.code(404).send({
+            error: "ACCOUNT_NOT_FOUND",
+            message: error.message,
+          });
+        }
         if (error instanceof CommandAlreadyUndoneError) {
           return reply.code(409).send({
             error: "COMMAND_ALREADY_UNDONE",
@@ -136,6 +149,12 @@ export function registerCommandRoutes(
         if (error instanceof CommandNotFoundError) {
           return reply.code(404).send({
             error: "COMMAND_NOT_FOUND",
+            message: error.message,
+          });
+        }
+        if (error instanceof AccountNotFoundError) {
+          return reply.code(404).send({
+            error: "ACCOUNT_NOT_FOUND",
             message: error.message,
           });
         }

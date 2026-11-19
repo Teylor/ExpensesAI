@@ -77,7 +77,7 @@
 ## Bloque 4: Core Financiero V1 (Cuentas, Movimientos, Offline-First y Recurrentes)
 
 ### Seed 09 — Cuentas (Bancos, Efectivo, Ahorro, Crédito) & Saldos Consolidados
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - CRUD de cuentas en cualquier moneda, cálculo de **Saldo por Cuenta**, **Saldo en Efectivo** y **Saldo Total** en moneda principal (con paréntesis multimoneda).

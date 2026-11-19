@@ -1,3 +1,8 @@
+import {
+  AccountsService,
+  PostgresAccountsRepository,
+  registerAccountCommandHandlers,
+} from "./accounts/service.js";
 import { buildApp } from "./app.js";
 import { AuthService, PostgresAuthRepository } from "./auth/service.js";
 import { CommandBus, PostgresCommandLogRepository } from "./commands/bus.js";
@@ -34,6 +39,10 @@ async function start(): Promise<void> {
   const commandBus = new CommandBus({
     repository: new PostgresCommandLogRepository(dbClient),
   });
+  const accountsService = new AccountsService({
+    repository: new PostgresAccountsRepository(dbClient),
+  });
+  registerAccountCommandHandlers(commandBus, accountsService);
   const fxService = new FxService({
     repository: new PostgresFxRatesRepository(dbClient),
     provider: createDefaultFxProvider(),
@@ -51,6 +60,7 @@ async function start(): Promise<void> {
     fxRateReader: fxService,
     authService,
     commandBus,
+    accountsService,
     secureCookies: env.NODE_ENV === "production",
     onError: captureExceptionSafe,
   });

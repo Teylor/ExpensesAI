@@ -9,8 +9,10 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import type { AccountsService } from "./accounts/service.js";
 import type { AuthService } from "./auth/service.js";
 import type { CommandBus } from "./commands/bus.js";
+import { registerAccountRoutes } from "./routes/accounts.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerCommandRoutes } from "./routes/commands.js";
 import { type FxRateReader, registerFxRoutes } from "./routes/fx.js";
@@ -22,6 +24,7 @@ export interface BuildAppOptions {
   fxRateReader?: FxRateReader;
   authService?: AuthService;
   commandBus?: CommandBus;
+  accountsService?: AccountsService;
   secureCookies?: boolean;
   onError?: (error: unknown, context: Record<string, unknown>) => void;
 }
@@ -143,6 +146,14 @@ export async function buildApp(
       registerCommandRoutes(app, {
         authService: options.authService,
         commandBus: options.commandBus,
+      });
+    }
+
+    if (options.accountsService) {
+      registerAccountRoutes(app, {
+        authService: options.authService,
+        accountsService: options.accountsService,
+        ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
       });
     }
   }
