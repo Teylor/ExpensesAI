@@ -145,7 +145,9 @@ describe("Command catalog Zod schemas", () => {
 
   it("allows fully editable custom categories and presets (add, rename, or remove items like etf)", () => {
     expect(DEFAULT_INVESTMENT_ASSET_TYPES).toContain("etf");
+    expect(DEFAULT_INVESTMENT_ASSET_TYPES).not.toContain("other");
     expect(DEFAULT_NET_WORTH_CATEGORIES).toContain("collectibles_cards");
+    expect(DEFAULT_NET_WORTH_CATEGORIES).not.toContain("other");
     expect(CATEGORY_SCOPES).toEqual([
       "income",
       "expense",

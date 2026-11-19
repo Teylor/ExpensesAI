@@ -13,13 +13,7 @@ export const TRANSACTION_SOURCES = [
 export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
 /** Tipos base de cuenta financiera soportados en V1. */
-export const ACCOUNT_TYPES = [
-  "bank",
-  "cash",
-  "savings",
-  "credit",
-  "other",
-] as const;
+export const ACCOUNT_TYPES = ["bank", "cash", "savings", "credit"] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 /** Versión de contrato del dominio compartido. */

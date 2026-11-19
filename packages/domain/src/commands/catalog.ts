@@ -25,7 +25,6 @@ export const DEFAULT_INVESTMENT_ASSET_TYPES = [
   "stocks",
   "etf",
   "funds",
-  "other",
 ] as const;
 
 export const NET_WORTH_KINDS = ["asset", "liability"] as const;
@@ -38,7 +37,6 @@ export const DEFAULT_NET_WORTH_CATEGORIES = [
   "collectibles_cards",
   "mortgage",
   "loan",
-  "other",
 ] as const;
 
 const editableCategoryNameSchema = z.string().trim().min(1).max(60);

@@ -20,13 +20,7 @@ describe("@agenticf/domain base contracts", () => {
   });
 
   it("includes required account categories and semantic contract version", () => {
-    expect(ACCOUNT_TYPES).toEqual([
-      "bank",
-      "cash",
-      "savings",
-      "credit",
-      "other",
-    ]);
+    expect(ACCOUNT_TYPES).toEqual(["bank", "cash", "savings", "credit"]);
     expect(DOMAIN_CONTRACT_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
