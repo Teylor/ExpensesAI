@@ -7,6 +7,7 @@ import {
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH_BYTES = 12;
+const AUTH_TAG_LENGTH_BYTES = 16;
 
 export function maskSecretPreview(rawSecret: string): string {
   const trimmed = rawSecret.trim();
@@ -35,7 +36,9 @@ export class SecretVault {
 
   encrypt(plaintext: string): string {
     const iv = randomBytes(IV_LENGTH_BYTES);
-    const cipher = createCipheriv(ALGORITHM, this.keyBuffer, iv);
+    const cipher = createCipheriv(ALGORITHM, this.keyBuffer, iv, {
+      authTagLength: AUTH_TAG_LENGTH_BYTES,
+    });
     const encrypted = Buffer.concat([
       cipher.update(plaintext, "utf8"),
       cipher.final(),
@@ -55,11 +58,16 @@ export class SecretVault {
     const authTag = Buffer.from(tagB64, "base64url");
     const ciphertext = Buffer.from(cipherB64, "base64url");
 
-    if (iv.length !== IV_LENGTH_BYTES || authTag.length !== 16) {
+    if (
+      iv.length !== IV_LENGTH_BYTES ||
+      authTag.length !== AUTH_TAG_LENGTH_BYTES
+    ) {
       throw new Error("Invalid IV or AuthTag length");
     }
 
-    const decipher = createDecipheriv(ALGORITHM, this.keyBuffer, iv);
+    const decipher = createDecipheriv(ALGORITHM, this.keyBuffer, iv, {
+      authTagLength: AUTH_TAG_LENGTH_BYTES,
+    });
     decipher.setAuthTag(authTag);
     const decrypted = Buffer.concat([
       decipher.update(ciphertext),
