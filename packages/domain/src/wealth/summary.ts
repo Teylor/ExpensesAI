@@ -22,6 +22,8 @@ export interface InvestmentSummaryInput {
   readonly name: string;
   readonly symbol: string | null;
   readonly quantity: string | null;
+  readonly purchasedAt?: string | null;
+  readonly purchasePrice?: string | null;
   readonly investedAmount: string;
   readonly currentValue: string;
   readonly currency: string;

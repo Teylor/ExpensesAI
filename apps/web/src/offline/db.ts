@@ -76,6 +76,8 @@ export interface LocalInvestment {
   name: string;
   symbol: string | null;
   quantity: string | null;
+  purchasedAt?: string | null;
+  purchasePrice?: string | null;
   investedAmount: string;
   currentValue: string;
   currency: string;

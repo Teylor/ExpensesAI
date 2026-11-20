@@ -70,6 +70,8 @@ export function registerWealthRoutes(
         name: i.name,
         symbol: i.symbol,
         quantity: i.quantity,
+        purchasedAt: i.purchasedAt,
+        purchasePrice: i.purchasePrice,
         investedAmount: i.investedAmount,
         currentValue: i.currentValue,
         currency: i.currency,

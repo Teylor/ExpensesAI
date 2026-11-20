@@ -512,6 +512,10 @@ export class OutboxSyncEngine {
           name: envelope.payload.name.trim(),
           symbol: envelope.payload.symbol?.trim() ?? prev?.symbol ?? null,
           quantity: envelope.payload.quantity ?? prev?.quantity ?? null,
+          purchasedAt:
+            envelope.payload.purchasedAt ?? prev?.purchasedAt ?? null,
+          purchasePrice:
+            envelope.payload.purchasePrice ?? prev?.purchasePrice ?? null,
           investedAmount: createMoney(envelope.payload.investedAmount, currency)
             .amount,
           currentValue: createMoney(envelope.payload.currentValue, currency)

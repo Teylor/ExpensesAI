@@ -130,6 +130,12 @@ const investmentUpsertPayloadSchema = z.object({
   name: z.string().trim().min(1).max(120),
   symbol: z.string().trim().min(1).max(20).optional(),
   quantity: positiveDecimalStringSchema.optional(),
+  /** V2-03 hook: fecha de compra (YYYY-MM-DD) y precio unitario de adquisición */
+  purchasedAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  purchasePrice: positiveDecimalStringSchema.optional(),
   investedAmount: decimalStringSchema,
   currentValue: decimalStringSchema,
   currency: currencyCodeSchema,

@@ -17,6 +17,8 @@ export interface StoredInvestment {
   readonly name: string;
   readonly symbol: string | null;
   readonly quantity: string | null;
+  readonly purchasedAt: string | null;
+  readonly purchasePrice: string | null;
   readonly investedAmount: string;
   readonly currentValue: string;
   readonly currency: string;
@@ -111,6 +113,8 @@ export class WealthService {
       name: string;
       symbol?: string | null;
       quantity?: string | null;
+      purchasedAt?: string | null;
+      purchasePrice?: string | null;
       investedAmount: string;
       currentValue: string;
       currency: string;
@@ -140,6 +144,14 @@ export class WealthService {
         input.quantity !== undefined
           ? (input.quantity?.trim() ?? null)
           : (previous?.quantity ?? null),
+      purchasedAt:
+        input.purchasedAt !== undefined
+          ? (input.purchasedAt?.trim() ?? null)
+          : (previous?.purchasedAt ?? null),
+      purchasePrice:
+        input.purchasePrice !== undefined
+          ? (input.purchasePrice?.trim() ?? null)
+          : (previous?.purchasePrice ?? null),
       investedAmount: investedMoney.amount,
       currentValue: currentMoney.amount,
       currency,
@@ -282,6 +294,12 @@ export function registerWealthCommandHandlers(
           ...(payload.quantity !== undefined
             ? { quantity: payload.quantity }
             : {}),
+          ...(payload.purchasedAt !== undefined
+            ? { purchasedAt: payload.purchasedAt }
+            : {}),
+          ...(payload.purchasePrice !== undefined
+            ? { purchasePrice: payload.purchasePrice }
+            : {}),
           investedAmount: payload.investedAmount,
           currentValue: payload.currentValue,
           currency: payload.currency,
@@ -312,6 +330,8 @@ export function registerWealthCommandHandlers(
         name: prev.name,
         symbol: prev.symbol,
         quantity: prev.quantity,
+        purchasedAt: prev.purchasedAt,
+        purchasePrice: prev.purchasePrice,
         investedAmount: prev.investedAmount,
         currentValue: prev.currentValue,
         currency: prev.currency,
@@ -443,6 +463,9 @@ export class PostgresWealthRepository implements WealthRepository {
     const quantityDb = item.quantity
       ? toDbNumericString(createMoney(item.quantity, item.currency))
       : null;
+    const purchasePriceDb = item.purchasePrice
+      ? toDbNumericString(createMoney(item.purchasePrice, item.currency))
+      : null;
 
     await this.dbClient.db
       .insert(investments)
@@ -453,6 +476,8 @@ export class PostgresWealthRepository implements WealthRepository {
         name: item.name,
         symbol: item.symbol,
         quantity: quantityDb,
+        purchasedAt: item.purchasedAt,
+        purchasePrice: purchasePriceDb,
         investedAmount: investedDb,
         currentValue: currentDb,
         currency: item.currency,
@@ -467,6 +492,8 @@ export class PostgresWealthRepository implements WealthRepository {
           name: item.name,
           symbol: item.symbol,
           quantity: quantityDb,
+          purchasedAt: item.purchasedAt,
+          purchasePrice: purchasePriceDb,
           investedAmount: investedDb,
           currentValue: currentDb,
           currency: item.currency,
@@ -575,6 +602,10 @@ export class PostgresWealthRepository implements WealthRepository {
       name: row.name,
       symbol: row.symbol,
       quantity: row.quantity ? normalizeStoredDecimal(row.quantity) : null,
+      purchasedAt: row.purchasedAt,
+      purchasePrice: row.purchasePrice
+        ? normalizeStoredDecimal(row.purchasePrice)
+        : null,
       investedAmount: normalizeStoredDecimal(row.investedAmount),
       currentValue: normalizeStoredDecimal(row.currentValue),
       currency: row.currency,

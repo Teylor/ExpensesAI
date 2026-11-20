@@ -18,9 +18,11 @@ export const investments = pgTable(
     /** User-editable category name (e.g., Crypto, Acciones, ETF, Fondos, custom) */
     assetType: text("asset_type").notNull(),
     name: text("name").notNull(),
-    /** V2-03 hook for live market price feeds */
+    /** V2-03 hooks for live market price feeds & purchase lot tracking */
     symbol: text("symbol"),
     quantity: numeric("quantity", { precision: 20, scale: 8 }),
+    purchasedAt: text("purchased_at"),
+    purchasePrice: numeric("purchase_price", { precision: 20, scale: 8 }),
     investedAmount: numeric("invested_amount", {
       precision: 20,
       scale: 8,
