@@ -3,6 +3,15 @@ import {
   PostgresAccountsRepository,
   registerAccountCommandHandlers,
 } from "./accounts/service.js";
+import {
+  ChatGptOAuthService,
+  PostgresAiOauthStateRepository,
+} from "./ai/oauth.js";
+import {
+  AgentOrchestrator,
+  PostgresAiConnectionsRepository,
+} from "./ai/orchestrator.js";
+import { SecretVault } from "./ai/vault.js";
 import { buildApp } from "./app.js";
 import { AuthService, PostgresAuthRepository } from "./auth/service.js";
 import {
@@ -89,6 +98,20 @@ async function start(): Promise<void> {
   const wealthService = new WealthService({
     repository: new PostgresWealthRepository(dbClient),
   });
+  const secretVault = SecretVault.fromPassphrase(env.AI_VAULT_SECRET);
+  const aiConnectionsRepository = new PostgresAiConnectionsRepository(dbClient);
+  const chatGptOAuthService = new ChatGptOAuthService({
+    repository: new PostgresAiOauthStateRepository(dbClient),
+    vault: secretVault,
+  });
+  const agentOrchestrator = new AgentOrchestrator({
+    connectionsRepository: aiConnectionsRepository,
+    vault: secretVault,
+    accountsService,
+    commandBus,
+    getUserPreferences: (userId) => authService.getUserPreferences(userId),
+    fxRateReader: fxService,
+  });
   registerAccountCommandHandlers(commandBus, accountsService);
   registerCategoryCommandHandlers(commandBus, categoriesService);
   registerTransactionCommandHandlers(commandBus, transactionsService);
@@ -115,6 +138,10 @@ async function start(): Promise<void> {
     transactionsService,
     recurringService,
     wealthService,
+    aiConnectionsRepository,
+    secretVault,
+    chatGptOAuthService,
+    agentOrchestrator,
     secureCookies: env.NODE_ENV === "production",
     onError: captureExceptionSafe,
   });

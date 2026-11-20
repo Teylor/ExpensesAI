@@ -1,4 +1,5 @@
 export * from "./accounts/index.js";
+export * from "./agent/index.js";
 export * from "./analytics/index.js";
 export * from "./commands/index.js";
 export * from "./contracts.js";

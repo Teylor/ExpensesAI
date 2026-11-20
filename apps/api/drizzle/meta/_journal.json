@@ -71,6 +71,13 @@
       "when": 1795154991684,
       "tag": "0009_bizarre_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795155453855,
+      "tag": "0010_burly_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

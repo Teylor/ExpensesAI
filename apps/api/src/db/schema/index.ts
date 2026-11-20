@@ -1,4 +1,5 @@
 export * from "./accounts.js";
+export * from "./ai.js";
 export * from "./commands.js";
 export * from "./fx.js";
 export * from "./recurring.js";

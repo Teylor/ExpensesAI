@@ -126,7 +126,7 @@
 ## Bloque 6: Agente Financiero (Plan Sharing + BYOK + Push-to-Talk + Guardrails) y Despliegue NAS
 
 ### Seed 15 — Conectores IA (*Sign in with ChatGPT Plan Sharing* + BYOK Cifrado) & Orquestador del Agente con Guardrails
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - OAuth 2.0 + PKCE con **Sign in with ChatGPT (Plan Sharing)** (login directo o vinculación desde Email+Password).

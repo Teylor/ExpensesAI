@@ -69,6 +69,10 @@ const envSchema = z
       emptyToUndefined,
       z.coerce.number().min(0).max(1).optional(),
     ),
+    AI_VAULT_SECRET: z
+      .string()
+      .min(16)
+      .default("agenticf-dev-aes-256-gcm-master-secret"),
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === "production" && data.CORS_ORIGIN.trim() === "*") {
