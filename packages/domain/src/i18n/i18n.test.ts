@@ -70,4 +70,20 @@ describe("i18n engine (ES / EN typed catalogs and interpolation)", () => {
     expect(output).not.toContain("undefined");
     expect(output).toContain("{{description}}");
   });
+
+  it("translates agent UI labels and interpolated fallback messages in ES and EN", () => {
+    expect(t("es", "agent.ui.triggerButton")).toBe("Agente IA");
+    expect(t("en", "agent.ui.triggerButton")).toBe("AI Agent");
+    expect(t("es", "agent.ui.guardrailBadge")).toBe("Guardrail de Dominio");
+    expect(t("en", "agent.ui.guardrailBadge")).toBe("Domain Guardrail");
+    expect(
+      t("en", "agent.ui.balanceFallback", { balance: "$3,000.00" }),
+    ).toContain("$3,000.00");
+    expect(t("es", "agent.ui.deleteConnectionAria", { label: "OpenAI" })).toBe(
+      "Eliminar conexión OpenAI",
+    );
+    expect(t("en", "agent.ui.deleteConnectionAria", { label: "OpenAI" })).toBe(
+      "Delete connection OpenAI",
+    );
+  });
 });
