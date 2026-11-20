@@ -1,0 +1,120 @@
+name: CI/CD — Build & Deploy to NAS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    name: Build & Push Images (GHCR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/api.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/teylor/agenticf-api:latest
+            ghcr.io/teylor/agenticf-api:${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Build and push Web image (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/web.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/teylor/agenticf-web:latest
+            ghcr.io/teylor/agenticf-web:${{ github.sha }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+  deploy-nas:
+    name: Deploy to UGREEN DXP2800 (Tailscale + SSH)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to Tailnet
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.NAS_SSH_PRIVATE_KEY }}
+
+      - name: Check Tailscale connectivity to NAS
+        env:
+          NAS_HOST: ${{ secrets.NAS_HOST }}
+        run: |
+          tailscale status
+          tailscale ping -c 3 "$NAS_HOST" || true
+
+      - name: Deploy updated containers on UGREEN DXP2800
+        env:
+          NAS_HOST: ${{ secrets.NAS_HOST }}
+          NAS_USER: ${{ secrets.NAS_USER }}
+          NAS_DEPLOY_DIR: ${{ secrets.NAS_DEPLOY_DIR }}
+          NAS_SSH_PORT: ${{ secrets.NAS_SSH_PORT }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PORT="${NAS_SSH_PORT:-22}"
+          for attempt in 1 2 3; do
+            echo "SSH deploy attempt ${attempt} to ${NAS_HOST}:${PORT}..."
+            if ssh -p "$PORT" -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o BatchMode=yes "${NAS_USER}@${NAS_HOST}" "DEPLOY_DIR='${NAS_DEPLOY_DIR:-/volume1/docker/agenticf}' GHCR_USER='${GHCR_USER}' GHCR_TOKEN='${GHCR_TOKEN}' bash -s" <<'EOF'
+              set -e
+              cd "$DEPLOY_DIR"
+              if [ -d .git ]; then
+                git pull origin main
+              fi
+              ENV_FLAG=""
+              if [ -f .env ]; then
+                ENV_FLAG="--env-file .env"
+              fi
+              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+              docker compose $ENV_FLAG -f docker/compose.nas.yml pull
+              docker compose $ENV_FLAG -f docker/compose.nas.yml up -d postgres
+              docker compose $ENV_FLAG -f docker/compose.nas.yml run --rm api node apps/api/dist/db/migrate.js
+              docker compose $ENV_FLAG -f docker/compose.nas.yml up -d --remove-orphans
+              docker image prune -f
+          EOF
+            then
+              echo "Deploy succeeded!"
+              exit 0
+            fi
+            sleep 3
+          done
+          exit 1
