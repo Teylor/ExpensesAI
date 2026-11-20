@@ -35,6 +35,7 @@ WORKDIR /app
 
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/packages/domain/package.json ./packages/domain/package.json
+COPY --from=prod-deps /app/packages/domain/node_modules ./packages/domain/node_modules
 COPY --from=prod-deps /app/apps/api/package.json ./apps/api/package.json
 COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 
