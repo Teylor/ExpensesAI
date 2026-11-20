@@ -4,6 +4,7 @@ import {
   type FxRateSnapshot,
   parseNaturalFinanceIntent,
   simulateCommandImpact,
+  t,
   type UserPreferences,
 } from "@agenticf/domain";
 import {
@@ -78,16 +79,19 @@ export function AgentFloatingDock({
   const [isListening, setIsListening] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
+  const locale = preferences.locale;
+
   // AI Connections state (Settings tab)
   const [connections, setConnections] = useState<AiConnectionDto[]>([]);
-  const [byokLabel, setByokLabel] = useState("Mi API Key OpenAI");
+  const [byokLabel, setByokLabel] = useState(() =>
+    t(locale, "agent.ui.byokDefaultLabel"),
+  );
   const [byokModel, setByokModel] = useState("gpt-4o-mini");
   const [byokKey, setByokKey] = useState("");
   const [settingsMsg, setSettingsMsg] = useState<string | null>(null);
 
   const voiceProvider = useMemo(() => createBrowserVoiceProvider(), []);
   const voiceSupported = voiceProvider.isSupported();
-  const locale = preferences.locale;
 
   useEffect(() => {
     if (open && tab === "settings" && isAuthenticated && isOnline) {
@@ -136,7 +140,7 @@ export function AgentFloatingDock({
             role: "agent",
             text:
               guardrail.rejectionMessage ??
-              "Solo puedo ayudarte con tus finanzas personales en AgenticF.",
+              t(locale, "agent.guardrail.outOfScope"),
             status: "rejected_guardrail",
           },
         ]);
@@ -209,10 +213,9 @@ export function AgentFloatingDock({
         {
           id: generateUuid(),
           role: "agent",
-          text:
-            locale === "en"
-              ? `Your consolidated balance is ${formattedTotalBalance}. Tell me an income or expense (e.g. "Income of 2000 EUR for Project X") to preview its exact impact.`
-              : `Tu saldo total consolidado es de ${formattedTotalBalance}. Indícame un ingreso o gasto (ej. "Nuevo ingreso de 2000 EUR por Trabajo X") para simular su impacto exacto.`,
+          text: t(locale, "agent.ui.balanceFallback", {
+            balance: formattedTotalBalance,
+          }),
           status: "answered",
         },
       ]);
@@ -247,10 +250,7 @@ export function AgentFloatingDock({
           ? {
               id: m.id,
               role: m.role,
-              text:
-                locale === "en"
-                  ? "Action cancelled."
-                  : "Acción cancelada. No se ha modificado tu saldo.",
+              text: t(locale, "agent.ui.cancelled"),
               status: "cancelled",
             }
           : m,
@@ -293,10 +293,10 @@ export function AgentFloatingDock({
       });
       setByokKey("");
       setConnections(await fetchAiConnections());
-      setSettingsMsg("API Key cifrada con AES-256-GCM y guardada.");
+      setSettingsMsg(t(locale, "agent.ui.byokSaved"));
     } catch (err) {
       setSettingsMsg(
-        err instanceof Error ? err.message : "Error guardando Key",
+        err instanceof Error ? err.message : t(locale, "agent.ui.byokError"),
       );
     }
   };
@@ -305,10 +305,12 @@ export function AgentFloatingDock({
     setSettingsMsg(null);
     try {
       const { authorizationUrl } = await startChatGptOAuthFlow();
-      setSettingsMsg(`Flujo OAuth PKCE iniciado: ${authorizationUrl}`);
+      setSettingsMsg(
+        t(locale, "agent.ui.chatgptStarted", { url: authorizationUrl }),
+      );
     } catch (err) {
       setSettingsMsg(
-        err instanceof Error ? err.message : "Error iniciando OAuth ChatGPT",
+        err instanceof Error ? err.message : t(locale, "agent.ui.chatgptError"),
       );
     }
   };
@@ -324,12 +326,14 @@ export function AgentFloatingDock({
           <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/90 px-4 py-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-emerald-400" />
-              <span className="text-sm font-semibold">Agente AgenticF</span>
+              <span className="text-sm font-semibold">
+                {t(locale, "agent.ui.title")}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                aria-label="Ajustes IA"
+                aria-label={t(locale, "agent.ui.settingsAria")}
                 onClick={() => setTab(tab === "chat" ? "settings" : "chat")}
                 className={`rounded-lg p-1.5 text-xs ${
                   tab === "settings"
@@ -341,7 +345,7 @@ export function AgentFloatingDock({
               </button>
               <button
                 type="button"
-                aria-label="Cerrar agente"
+                aria-label={t(locale, "agent.ui.closeAria")}
                 onClick={() => setOpen(false)}
                 className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
               >
@@ -356,11 +360,7 @@ export function AgentFloatingDock({
               <div className="flex-1 space-y-3 overflow-y-auto p-4 text-xs">
                 {messages.length === 0 && (
                   <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3 text-zinc-400">
-                    Habla o escribe cualquier operación financiera (p. ej.{" "}
-                    <span className="text-zinc-200">
-                      "Nuevo ingreso de 2000 EUR por Trabajo X"
-                    </span>
-                    ). Guardrail financiero activo.
+                    {t(locale, "agent.ui.emptyPrompt")}
                   </div>
                 )}
 
@@ -383,7 +383,7 @@ export function AgentFloatingDock({
                       {msg.status === "rejected_guardrail" && (
                         <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase text-amber-400">
                           <ShieldAlert className="h-3 w-3" />
-                          <span>Guardrail de Dominio</span>
+                          <span>{t(locale, "agent.ui.guardrailBadge")}</span>
                         </div>
                       )}
                       <p>{msg.text}</p>
@@ -401,14 +401,14 @@ export function AgentFloatingDock({
                             className="flex items-center gap-1 rounded-lg bg-emerald-500 px-2.5 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-emerald-400"
                           >
                             <Check className="h-3 w-3" />
-                            <span>Confirmar</span>
+                            <span>{t(locale, "agent.ui.confirm")}</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleCancelProposal(msg.id)}
                             className="rounded-lg bg-zinc-800 px-2.5 py-1 text-[11px] text-zinc-300 hover:bg-zinc-700"
                           >
-                            Cancelar
+                            {t(locale, "agent.ui.cancel")}
                           </button>
                         </div>
                       )}
@@ -431,10 +431,10 @@ export function AgentFloatingDock({
                   onClick={handleToggleVoice}
                   title={
                     voiceSupported
-                      ? "Push-to-Talk (Web Speech API gratis)"
-                      : "Voz no soportada en este navegador (usa texto)"
+                      ? t(locale, "agent.ui.voiceSupportedTitle")
+                      : t(locale, "agent.ui.voiceUnsupportedTitle")
                   }
-                  aria-label="Push to Talk"
+                  aria-label={t(locale, "agent.ui.voiceAria")}
                   className={`rounded-xl p-2 ${
                     isListening
                       ? "animate-pulse bg-rose-500 text-white"
@@ -452,8 +452,8 @@ export function AgentFloatingDock({
 
                 <input
                   type="text"
-                  placeholder="Ej. Nuevo ingreso de 2000 EUR..."
-                  aria-label="Mensaje para el agente"
+                  placeholder={t(locale, "agent.ui.inputPlaceholder")}
+                  aria-label={t(locale, "agent.ui.inputAria")}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs focus:border-emerald-500 focus:outline-none"
@@ -462,7 +462,7 @@ export function AgentFloatingDock({
                 <button
                   type="submit"
                   disabled={isSending || !input.trim()}
-                  aria-label="Enviar mensaje"
+                  aria-label={t(locale, "agent.ui.sendAria")}
                   className="rounded-xl bg-emerald-500 p-2 text-zinc-950 hover:bg-emerald-400 disabled:opacity-50"
                 >
                   <Send className="h-4 w-4" />
@@ -475,15 +475,15 @@ export function AgentFloatingDock({
               <div className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
                 <div>
                   <p className="font-medium text-zinc-100">
-                    Confirmación previa del agente
+                    {t(locale, "agent.ui.confirmToggleTitle")}
                   </p>
                   <p className="text-[11px] text-zinc-400">
-                    Muestra impacto exacto antes de modificar saldos
+                    {t(locale, "agent.ui.confirmToggleDesc")}
                   </p>
                 </div>
                 <input
                   type="checkbox"
-                  aria-label="Confirmación previa del agente"
+                  aria-label={t(locale, "agent.ui.confirmToggleTitle")}
                   checked={preferences.agentConfirmEnabled}
                   onChange={(e) =>
                     void onToggleConfirmEnabled(e.target.checked)
@@ -493,10 +493,10 @@ export function AgentFloatingDock({
 
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
                 <p className="font-medium text-zinc-100">
-                  1. Sign in with ChatGPT (Plan Sharing)
+                  {t(locale, "agent.ui.chatgptTitle")}
                 </p>
                 <p className="mt-0.5 text-[11px] text-zinc-400">
-                  Usa tu suscripción de ChatGPT mediante OAuth 2.0 + PKCE.
+                  {t(locale, "agent.ui.chatgptDesc")}
                 </p>
                 <button
                   type="button"
@@ -504,7 +504,7 @@ export function AgentFloatingDock({
                   onClick={() => void handleStartChatGpt()}
                   className="mt-2.5 w-full rounded-lg bg-emerald-500 py-1.5 font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50"
                 >
-                  Conectar con ChatGPT
+                  {t(locale, "agent.ui.chatgptConnect")}
                 </button>
               </div>
 
@@ -514,28 +514,28 @@ export function AgentFloatingDock({
               >
                 <p className="flex items-center gap-1.5 font-medium text-zinc-100">
                   <KeyRound className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>2. Fallback BYOK (AES-256-GCM)</span>
+                  <span>{t(locale, "agent.ui.byokTitle")}</span>
                 </p>
                 <input
                   type="text"
-                  placeholder="Etiqueta"
-                  aria-label="Etiqueta BYOK"
+                  placeholder={t(locale, "agent.ui.byokLabelPlaceholder")}
+                  aria-label={t(locale, "agent.ui.byokLabelAria")}
                   value={byokLabel}
                   onChange={(e) => setByokLabel(e.target.value)}
                   className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
                 />
                 <input
                   type="text"
-                  placeholder="Modelo (ej. gpt-4o-mini)"
-                  aria-label="Modelo BYOK"
+                  placeholder={t(locale, "agent.ui.byokModelPlaceholder")}
+                  aria-label={t(locale, "agent.ui.byokModelAria")}
                   value={byokModel}
                   onChange={(e) => setByokModel(e.target.value)}
                   className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
                 />
                 <input
                   type="password"
-                  placeholder="API Key (sk-...)"
-                  aria-label="API Key BYOK"
+                  placeholder={t(locale, "agent.ui.byokKeyPlaceholder")}
+                  aria-label={t(locale, "agent.ui.byokKeyAria")}
                   value={byokKey}
                   onChange={(e) => setByokKey(e.target.value)}
                   className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
@@ -545,7 +545,7 @@ export function AgentFloatingDock({
                   disabled={!isAuthenticated || !isOnline || !byokKey.trim()}
                   className="w-full rounded-lg bg-zinc-800 py-1.5 font-medium text-zinc-100 hover:bg-zinc-700 disabled:opacity-50"
                 >
-                  Guardar Key Cifrada
+                  {t(locale, "agent.ui.byokSave")}
                 </button>
               </form>
 
@@ -556,7 +556,7 @@ export function AgentFloatingDock({
               {connections.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-semibold uppercase text-zinc-400">
-                    Conexiones activas
+                    {t(locale, "agent.ui.activeConnections")}
                   </p>
                   {connections.map((c) => (
                     <div
@@ -571,7 +571,9 @@ export function AgentFloatingDock({
                       </div>
                       <button
                         type="button"
-                        aria-label={`Eliminar conexión ${c.label}`}
+                        aria-label={t(locale, "agent.ui.deleteConnectionAria", {
+                          label: c.label,
+                        })}
                         onClick={() =>
                           void deleteAiConnection(c.id).then(() =>
                             fetchAiConnections().then(setConnections),
@@ -594,12 +596,12 @@ export function AgentFloatingDock({
       <button
         type="button"
         data-testid="agent-floating-trigger"
-        aria-label="Abrir Agente Financiero"
+        aria-label={t(locale, "agent.ui.triggerAria")}
         onClick={() => setOpen((v) => !v)}
         className="flex h-14 items-center gap-2 rounded-full bg-emerald-500 px-5 font-semibold text-zinc-950 shadow-lg shadow-emerald-500/25 transition hover:scale-105 hover:bg-emerald-400"
       >
         <Bot className="h-5 w-5" />
-        <span className="text-sm">Agente IA</span>
+        <span className="text-sm">{t(locale, "agent.ui.triggerButton")}</span>
       </button>
     </div>
   );
