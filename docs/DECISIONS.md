@@ -56,5 +56,5 @@
 - **Backend (`apps/api`):** Node.js 22 LTS + Fastify + `@fastify/type-provider-zod` + Drizzle ORM + PostgreSQL 17 + `@node-rs/argon2` + Arctic (OAuth2/PKCE) + Vercel AI SDK (`ai`) + `croner` (con PostgreSQL advisory locks).
 - **Voz Push-to-Talk:** `Web Speech API` nativa (0 €), con degradación limpia a chat de texto.
 - **Calidad, Seguridad y Errores:** Biome, Vitest, Playwright, Lefthook (bloqueo pre-push), Sentry Developer / GlitchTip compatible (con *scrubbing* financiero), AES-256-GCM para secretos en BD, Gitleaks + `pnpm audit` + Semgrep OSS en GitHub Actions.
-- **Metodología:** ODD + Conditional TDD en `C:\Users\teylo\ODD`.
+- **Metodología:** ODD + Conditional TDD en `C:\Users\teylo\obsidian-vaults\expenses-ai-odd-vault`.
 - **Estrategia Git:** **1 rama por Bloque** (`block/XX-<slug>`) y **1 commit atómico por Seed** al hacer `/odd-harvest` (Conventional Commits: `<type>(seed-XX): <resumen>`), integrando cada Bloque completo en `main`.

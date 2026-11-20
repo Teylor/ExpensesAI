@@ -1,6 +1,6 @@
 # Guía Rápida de Trabajo: ODD + Conditional TDD en AgenticF
 
-> Resumen operativo del protocolo definido en el Vault de Obsidian **`C:\Users\teylo\ODD`** ([ODD_Master_Protocol.md](file:///C:/Users/teylo/ODD/01_Rules/ODD_Master_Protocol.md) y [Conditional_TDD_Policy.md](file:///C:/Users/teylo/ODD/01_Rules/Conditional_TDD_Policy.md)).
+> Resumen operativo del protocolo definido en el Vault de Obsidian **`C:\Users\teylo\obsidian-vaults\expenses-ai-odd-vault`** ([ODD_Master_Protocol.md](file:///C:/Users/teylo/obsidian-vaults/expenses-ai-odd-vault/01_Rules/ODD_Master_Protocol.md) y [Conditional_TDD_Policy.md](file:///C:/Users/teylo/obsidian-vaults/expenses-ai-odd-vault/01_Rules/Conditional_TDD_Policy.md)).
 
 ---
 
@@ -17,8 +17,8 @@ flowchart LR
 ### 1. `/odd-seed` — Sembrar el Seed
 - **Cuándo:** Al iniciar cualquier tarea de tamaño **M o L** (cada uno de los 16 Seeds de [ROADMAP_V1.md](./ROADMAP_V1.md)).
 - **Qué se hace:**
-  - Se inspecciona el código existente, [DECISIONS.md](./DECISIONS.md), [BACKLOG_V2.md](./BACKLOG_V2.md) y `C:\Users\teylo\ODD\06_Architecture\System_Overview.md`.
-  - Se crea la ficha del Seed en `C:\Users\teylo\ODD\04_Seeds\YYYY-MM-DD_<nombre-seed>.md` con objetivo, archivos afectados, criterios de aceptación, tareas atómicas (`T1`, `T2`…) y la clasificación **Strict TDD** vs **`[TDD-SKIP]`**.
+  - Se inspecciona el código existente, [DECISIONS.md](./DECISIONS.md), [BACKLOG_V2.md](./BACKLOG_V2.md) y `C:\Users\teylo\obsidian-vaults\expenses-ai-odd-vault\06_Architecture\System_Overview.md`.
+  - Se crea la ficha del Seed en `C:\Users\teylo\obsidian-vaults\expenses-ai-odd-vault\04_Seeds\YYYY-MM-DD_<nombre-seed>.md` con objetivo, archivos afectados, criterios de aceptación, tareas atómicas (`T1`, `T2`…) y la clasificación **Strict TDD** vs **`[TDD-SKIP]`**.
   - Si hay ambigüedad o riesgos técnicos, se resuelven con el usuario antes de escribir código.
 
 ### 2. `/odd-grow` — Crecer tarea por tarea
@@ -34,7 +34,7 @@ flowchart LR
 ### 3. `/odd-prune` — Podar (cuando aplica / al cerrar un Bloque)
 - **Qué se hace:**
   - Revisar código recién modificado y tests asociados.
-  - Eliminar código muerto, duplicación y experimentos en `C:\Users\teylo\ODD\05_Spikes/` ya integrados o descartados.
+  - Eliminar código muerto, duplicación y experimentos en `C:\Users\teylo\obsidian-vaults\expenses-ai-odd-vault\05_Spikes/` ya integrados o descartados.
   - **Poda de tests:** Consolidar tests frágiles o acoplados a detalles internos en tests de comportamiento claros.
   - Ejecutar la suite completa y linters para confirmar cero regresiones.
 
@@ -44,7 +44,7 @@ flowchart LR
   2. Ejecutar la verificación completa del monorepo (`typecheck`, `lint`, `test`, `build`).
   3. Pegar la evidencia real en la sección `## 📊 Closing Evidence` del Seed y actualizar el frontmatter a `status: harvested`.
   4. Actualizar la memoria viva:
-     - `C:\Users\teylo\ODD\06_Architecture\System_Overview.md` (nuevos contratos, patrones o ADRs).
+     - `C:\Users\teylo\obsidian-vaults\expenses-ai-odd-vault\06_Architecture\System_Overview.md` (nuevos contratos, patrones o ADRs).
      - [ROADMAP_V1.md](./ROADMAP_V1.md) (marcar el Seed como `✅ Harvested`).
 
 > **Tareas pequeñas (Tamaño S):** Micro-arreglos o retoques locales se ejecutan directamente sin crear un Seed nuevo en `04_Seeds/`, manteniendo TDD obligatorio si se trata de un bug fix (primero test que reproduce el bug).
@@ -56,7 +56,7 @@ flowchart LR
 1. **Aviso previo obligatorio:** Si una petición contradice una decisión cerrada en [DECISIONS.md](./DECISIONS.md) o adelanta un elemento de [BACKLOG_V2.md](./BACKLOG_V2.md), el agente debe **avisar antes de implementar** indicando el conflicto y su impacto.
 2. **Actualización sincronizada (si el usuario aprueba el cambio):**
    - Actualizar [DECISIONS.md](./DECISIONS.md) documentando la nueva decisión.
-   - Registrar o actualizar el ADR correspondiente en `C:\Users\teylo\ODD\06_Architecture\System_Overview.md`.
+   - Registrar o actualizar el ADR correspondiente en `C:\Users\teylo\obsidian-vaults\expenses-ai-odd-vault\06_Architecture\System_Overview.md`.
    - Ajustar [ROADMAP_V1.md](./ROADMAP_V1.md) y/o [BACKLOG_V2.md](./BACKLOG_V2.md) si cambia el alcance.
 
 ---
