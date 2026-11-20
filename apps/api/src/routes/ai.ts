@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { UserPreferences } from "@agenticf/domain";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -13,7 +14,7 @@ import type {
 } from "../ai/orchestrator.js";
 import { maskSecretPreview, type SecretVault } from "../ai/vault.js";
 import type { AuthService } from "../auth/service.js";
-import { requireAuthenticatedUser } from "./auth.js";
+import { requireAuthenticatedUser, SESSION_COOKIE_NAME } from "./auth.js";
 
 export interface RegisterAiRoutesOptions {
   authService: AuthService;
@@ -21,6 +22,11 @@ export interface RegisterAiRoutesOptions {
   secretVault: SecretVault;
   chatGptOAuthService: ChatGptOAuthService;
   agentOrchestrator: AgentOrchestrator;
+  secureCookies?: boolean;
+  onUserRegistered?: (
+    userId: string,
+    preferences: UserPreferences,
+  ) => Promise<void>;
 }
 
 const byokBodySchema = z.object({
@@ -74,6 +80,8 @@ export function registerAiRoutes(
     secretVault,
     chatGptOAuthService,
     agentOrchestrator,
+    secureCookies = true,
+    onUserRegistered,
   } = options;
 
   typedApp.get("/api/v1/ai/connections", async (request, reply) => {
@@ -148,10 +156,11 @@ export function registerAiRoutes(
   );
 
   typedApp.post("/api/v1/ai/oauth/chatgpt/start", async (request, reply) => {
-    const auth = await requireAuthenticatedUser(request, reply, authService);
-    if (!auth) return;
-
-    const result = await chatGptOAuthService.startAuthorization(auth.user.id);
+    const token = request.cookies[SESSION_COOKIE_NAME];
+    const auth = await authService.authenticateSession(token);
+    const result = await chatGptOAuthService.startAuthorization(
+      auth?.user.id ?? null,
+    );
     return reply.code(200).send(result);
   });
 
@@ -163,17 +172,42 @@ export function registerAiRoutes(
       },
     },
     async (request, reply) => {
-      const auth = await requireAuthenticatedUser(request, reply, authService);
-      if (!auth) return;
-
       try {
         const exchanged = await chatGptOAuthService.completeAuthorization(
           request.body,
         );
+
+        const token = request.cookies[SESSION_COOKIE_NAME];
+        const currentAuth = await authService.authenticateSession(token);
+
+        let targetUserId = exchanged.userId ?? currentAuth?.user.id ?? null;
+        let signedInUser = currentAuth?.user;
+        let signedInPreferences = currentAuth?.preferences;
+
+        if (!targetUserId) {
+          const oauthAuth = await authService.findOrCreateOAuthUser({
+            email: exchanged.email,
+            displayName: exchanged.displayName,
+          });
+          if (oauthAuth.isNewUser && onUserRegistered) {
+            await onUserRegistered(oauthAuth.user.id, oauthAuth.preferences);
+          }
+          reply.setCookie(SESSION_COOKIE_NAME, oauthAuth.sessionToken, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: secureCookies,
+            path: "/",
+            expires: oauthAuth.expiresAt,
+          });
+          targetUserId = oauthAuth.user.id;
+          signedInUser = oauthAuth.user;
+          signedInPreferences = oauthAuth.preferences;
+        }
+
         const now = new Date();
         const record: AiConnectionRecord = {
           id: randomUUID(),
-          userId: auth.user.id,
+          userId: targetUserId,
           kind: "chatgpt_oauth",
           provider: "openai",
           label: exchanged.displayName ?? "ChatGPT Plan Sharing",
@@ -191,6 +225,8 @@ export function registerAiRoutes(
         await aiConnectionsRepository.upsert(record);
         return reply.code(200).send({
           connection: toPublicConnectionDto(record),
+          ...(signedInUser ? { user: signedInUser } : {}),
+          ...(signedInPreferences ? { preferences: signedInPreferences } : {}),
         });
       } catch (error) {
         if (error instanceof InvalidOAuthStateError) {

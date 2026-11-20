@@ -173,6 +173,43 @@ export class AuthService {
     };
   }
 
+  async findOrCreateOAuthUser(input: {
+    email: string;
+    displayName?: string | null;
+  }): Promise<AuthSessionResult & { isNewUser: boolean }> {
+    const normalizedEmail = input.email.trim().toLowerCase();
+    let storedUser = await this.repository.findUserByEmail(normalizedEmail);
+    let isNewUser = false;
+    let preferences: UserPreferences;
+
+    if (!storedUser) {
+      isNewUser = true;
+      const now = this.now();
+      storedUser = {
+        id: randomUUID(),
+        email: normalizedEmail,
+        passwordHash: null,
+        displayName: input.displayName ?? null,
+        createdAt: now,
+      };
+      preferences = { ...DEFAULT_USER_PREFERENCES };
+      await this.repository.createUserWithPreferences(storedUser, preferences);
+    } else {
+      preferences =
+        (await this.repository.getPreferences(storedUser.id)) ??
+        DEFAULT_USER_PREFERENCES;
+    }
+
+    const { sessionToken, expiresAt } = await this.issueSession(storedUser.id);
+    return {
+      user: toPublicUser(storedUser),
+      preferences,
+      sessionToken,
+      expiresAt,
+      isNewUser,
+    };
+  }
+
   async authenticateSession(
     rawToken: string | undefined,
   ): Promise<AuthenticatedContext | null> {

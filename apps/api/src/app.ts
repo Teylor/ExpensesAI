@@ -249,6 +249,17 @@ export async function buildApp(
         secretVault: options.secretVault,
         chatGptOAuthService: options.chatGptOAuthService,
         agentOrchestrator: options.agentOrchestrator,
+        secureCookies: options.secureCookies ?? true,
+        ...(categoriesService
+          ? {
+              onUserRegistered: async (userId, preferences) => {
+                await categoriesService.seedDefaultCategories(
+                  userId,
+                  preferences.locale,
+                );
+              },
+            }
+          : {}),
       });
     }
   }

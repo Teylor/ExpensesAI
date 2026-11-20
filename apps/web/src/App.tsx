@@ -43,6 +43,7 @@ import {
   patchUserPreferences,
   registerWithEmail,
   runDueRecurringRulesRemote,
+  startChatGptOAuthFlow,
 } from "./api/client.js";
 import { AgentFloatingDock } from "./components/AgentFloatingDock.js";
 import { AnalyticsPanel } from "./components/AnalyticsPanel.js";
@@ -285,6 +286,20 @@ export function App() {
     setOfflineGuest(false);
     setLastCommand(null);
     await reloadLocalState();
+  };
+
+  const handleSignInWithChatGpt = async () => {
+    setAuthError(null);
+    try {
+      const { authorizationUrl } = await startChatGptOAuthFlow();
+      window.location.assign(authorizationUrl);
+    } catch (err) {
+      setAuthError(
+        err instanceof Error
+          ? err.message
+          : "Error iniciando Sign in with ChatGPT (requiere backend conectado)",
+      );
+    }
   };
 
   const handleToggleLocale = async (nextLocale: SupportedLocale) => {
@@ -625,6 +640,16 @@ export function App() {
                 {authMode === "login" ? "Entrar" : "Registrarme"}
               </button>
             </form>
+
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => void handleSignInWithChatGpt()}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800"
+              >
+                <span>Sign in with ChatGPT (Plan Sharing)</span>
+              </button>
+            </div>
 
             <div className="mt-4 flex items-center justify-between text-xs text-zinc-400">
               <button

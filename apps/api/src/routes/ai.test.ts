@@ -333,6 +333,28 @@ describe("AI Connectors (ChatGPT OAuth Plan Sharing + BYOK) & Agent Chat REST ro
       expect(goodChat.json().impact.summary).toContain(
         "3.000,00 € a 5.000,00 €",
       );
+
+      // Direct unauthenticated Sign in with ChatGPT OAuth (creates passwordless user + issues session cookie)
+      const directStart = await app.inject({
+        method: "POST",
+        url: "/api/v1/ai/oauth/chatgpt/start",
+      });
+      expect(directStart.statusCode).toBe(200);
+
+      const directCallback = await app.inject({
+        method: "POST",
+        url: "/api/v1/ai/oauth/chatgpt/callback",
+        payload: {
+          state: directStart.json().state,
+          code: "direct-oauth-code",
+        },
+      });
+      expect(directCallback.statusCode).toBe(200);
+      expect(directCallback.headers["set-cookie"]).toBeDefined();
+      expect(directCallback.json().user.email).toBe(
+        "chatgpt-user@agenticf.local",
+      );
+      expect(directCallback.json().connection.kind).toBe("chatgpt_oauth");
     } finally {
       await app.close();
     }
