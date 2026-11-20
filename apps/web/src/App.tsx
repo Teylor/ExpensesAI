@@ -44,10 +44,14 @@ import {
   registerWithEmail,
   runDueRecurringRulesRemote,
 } from "./api/client.js";
+import { AnalyticsPanel } from "./components/AnalyticsPanel.js";
+import { WealthAndExportPanel } from "./components/WealthAndExportPanel.js";
 import {
   createOfflineDb,
   type LocalAccount,
   type LocalCategory,
+  type LocalInvestment,
+  type LocalNetWorthItem,
   type LocalRecurringRule,
   type LocalTransaction,
 } from "./offline/db.js";
@@ -87,6 +91,8 @@ export function App() {
   const [recurringRules, setRecurringRules] = useState<LocalRecurringRule[]>(
     [],
   );
+  const [investments, setInvestments] = useState<LocalInvestment[]>([]);
+  const [netWorthItems, setNetWorthItems] = useState<LocalNetWorthItem[]>([]);
   const [fxSnapshot, setFxSnapshot] = useState<FxRateSnapshot | undefined>(
     undefined,
   );
@@ -132,15 +138,18 @@ export function App() {
   const [recDescription, setRecDescription] = useState("");
 
   const reloadLocalState = useCallback(async () => {
-    const [accs, cats, txs, recs, fx, prefs, pending] = await Promise.all([
-      offlineDb.accounts.toArray(),
-      offlineDb.categories.toArray(),
-      offlineDb.transactions.toArray(),
-      offlineDb.recurringRules.toArray(),
-      offlineDb.getLatestFxSnapshot(),
-      offlineDb.getPreferences(),
-      outboxEngine.getPendingCount(),
-    ]);
+    const [accs, cats, txs, recs, invs, nws, fx, prefs, pending] =
+      await Promise.all([
+        offlineDb.accounts.toArray(),
+        offlineDb.categories.toArray(),
+        offlineDb.transactions.toArray(),
+        offlineDb.recurringRules.toArray(),
+        offlineDb.investments.toArray(),
+        offlineDb.netWorthItems.toArray(),
+        offlineDb.getLatestFxSnapshot(),
+        offlineDb.getPreferences(),
+        outboxEngine.getPendingCount(),
+      ]);
 
     const activeAccs = accs.filter((a) => !a.isArchived);
     setAccounts(activeAccs);
@@ -158,6 +167,8 @@ export function App() {
         .filter((r) => r.deletedAt === null)
         .sort((a, b) => a.nextDueLocalDate.localeCompare(b.nextDueLocalDate)),
     );
+    setInvestments(invs.filter((i) => i.deletedAt === null));
+    setNetWorthItems(nws.filter((i) => i.deletedAt === null));
     setFxSnapshot(fx ?? undefined);
     setPreferences(prefs);
     setPendingCount(pending);
@@ -657,6 +668,14 @@ export function App() {
                 </p>
               </div>
             </section>
+
+            {/* Analytics & Savings Panel (Recharts, 100% offline-first) */}
+            <AnalyticsPanel
+              transactions={transactions}
+              categories={categories}
+              preferences={preferences}
+              {...(fxSnapshot ? { fxSnapshot } : {})}
+            />
 
             {/* Accounts & New Transaction Grid */}
             <div className="grid gap-6 lg:grid-cols-2">
@@ -1193,6 +1212,19 @@ export function App() {
                 </div>
               </form>
             </section>
+
+            {/* Investments (V1), Net Worth & CSV Export Panel */}
+            <WealthAndExportPanel
+              accounts={accounts}
+              totalLiquidBalanceBase={balancesSummary.totalBalance}
+              transactions={transactions}
+              categories={categories}
+              investments={investments}
+              netWorthItems={netWorthItems}
+              preferences={preferences}
+              {...(fxSnapshot ? { fxSnapshot } : {})}
+              onDispatchCommand={dispatchCommand}
+            />
           </div>
         )}
       </main>

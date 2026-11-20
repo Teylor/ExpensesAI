@@ -15,12 +15,15 @@ import type { CategoriesService } from "./categories/service.js";
 import type { CommandBus } from "./commands/bus.js";
 import type { RecurringService } from "./recurring/service.js";
 import { registerAccountRoutes } from "./routes/accounts.js";
+import { registerAnalyticsRoutes } from "./routes/analytics.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerCommandRoutes } from "./routes/commands.js";
 import { type FxRateReader, registerFxRoutes } from "./routes/fx.js";
 import { registerRecurringRoutes } from "./routes/recurring.js";
 import { registerCategoryAndTransactionRoutes } from "./routes/transactions.js";
+import { registerWealthRoutes } from "./routes/wealth.js";
 import type { TransactionsService } from "./transactions/service.js";
+import type { WealthService } from "./wealth/service.js";
 
 export interface BuildAppOptions {
   corsOrigin: string;
@@ -33,6 +36,7 @@ export interface BuildAppOptions {
   categoriesService?: CategoriesService;
   transactionsService?: TransactionsService;
   recurringService?: RecurringService;
+  wealthService?: WealthService;
   secureCookies?: boolean;
   onError?: (error: unknown, context: Record<string, unknown>) => void;
 }
@@ -193,6 +197,31 @@ export async function buildApp(
       registerRecurringRoutes(app, {
         authService: options.authService,
         recurringService: options.recurringService,
+        ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
+      });
+    }
+
+    if (options.transactionsService) {
+      registerAnalyticsRoutes(app, {
+        authService: options.authService,
+        transactionsService: options.transactionsService,
+        ...(options.categoriesService
+          ? { categoriesService: options.categoriesService }
+          : {}),
+        ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
+      });
+    }
+
+    if (options.wealthService) {
+      registerWealthRoutes(app, {
+        authService: options.authService,
+        wealthService: options.wealthService,
+        ...(options.accountsService
+          ? { accountsService: options.accountsService }
+          : {}),
+        ...(options.transactionsService
+          ? { transactionsService: options.transactionsService }
+          : {}),
         ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
       });
     }

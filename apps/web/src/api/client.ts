@@ -8,6 +8,8 @@ import type {
   AgenticfOfflineDb,
   LocalAccount,
   LocalCategory,
+  LocalInvestment,
+  LocalNetWorthItem,
   LocalRecurringRule,
   LocalTransaction,
 } from "../offline/db.js";
@@ -187,17 +189,20 @@ export async function hydrateOfflineDbFromServer(
 ): Promise<void> {
   const nowIso = new Date().toISOString();
 
-  const [accRes, catRes, txRes, recRes, fxRes] = await Promise.allSettled([
-    fetch(`${baseUrl}/api/v1/accounts?includeArchived=true`, {
-      credentials: "include",
-    }),
-    fetch(`${baseUrl}/api/v1/categories`, { credentials: "include" }),
-    fetch(`${baseUrl}/api/v1/transactions?limit=200`, {
-      credentials: "include",
-    }),
-    fetch(`${baseUrl}/api/v1/recurring`, { credentials: "include" }),
-    fetch(`${baseUrl}/api/v1/fx/latest`, { credentials: "include" }),
-  ]);
+  const [accRes, catRes, txRes, recRes, invRes, nwRes, fxRes] =
+    await Promise.allSettled([
+      fetch(`${baseUrl}/api/v1/accounts?includeArchived=true`, {
+        credentials: "include",
+      }),
+      fetch(`${baseUrl}/api/v1/categories`, { credentials: "include" }),
+      fetch(`${baseUrl}/api/v1/transactions?limit=200`, {
+        credentials: "include",
+      }),
+      fetch(`${baseUrl}/api/v1/recurring`, { credentials: "include" }),
+      fetch(`${baseUrl}/api/v1/investments`, { credentials: "include" }),
+      fetch(`${baseUrl}/api/v1/networth`, { credentials: "include" }),
+      fetch(`${baseUrl}/api/v1/fx/latest`, { credentials: "include" }),
+    ]);
 
   if (accRes.status === "fulfilled" && accRes.value.ok) {
     const body = (await accRes.value.json()) as {
@@ -267,6 +272,32 @@ export async function hydrateOfflineDbFromServer(
       body.rules.map((r) => ({
         ...r,
         deletedAt: null,
+      })),
+    );
+  }
+
+  if (invRes.status === "fulfilled" && invRes.value.ok) {
+    const body = (await invRes.value.json()) as {
+      items: Array<Omit<LocalInvestment, "deletedAt" | "updatedAt">>;
+    };
+    await db.investments.bulkPut(
+      body.items.map((i) => ({
+        ...i,
+        deletedAt: null,
+        updatedAt: nowIso,
+      })),
+    );
+  }
+
+  if (nwRes.status === "fulfilled" && nwRes.value.ok) {
+    const body = (await nwRes.value.json()) as {
+      items: Array<Omit<LocalNetWorthItem, "deletedAt" | "updatedAt">>;
+    };
+    await db.netWorthItems.bulkPut(
+      body.items.map((i) => ({
+        ...i,
+        deletedAt: null,
+        updatedAt: nowIso,
       })),
     );
   }

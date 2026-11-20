@@ -19,6 +19,10 @@ import {
   AccountCurrencyMismatchError,
   TransactionNotFoundError,
 } from "../transactions/service.js";
+import {
+  InvestmentNotFoundError,
+  NetWorthItemNotFoundError,
+} from "../wealth/service.js";
 import { requireAuthenticatedUser } from "./auth.js";
 
 export interface RegisterCommandRoutesOptions {
@@ -68,6 +72,18 @@ function handleCommandRouteError(reply: FastifyReply, error: unknown) {
   if (error instanceof RecurringRuleNotFoundError) {
     return reply.code(404).send({
       error: "RECURRING_RULE_NOT_FOUND",
+      message: error.message,
+    });
+  }
+  if (error instanceof InvestmentNotFoundError) {
+    return reply.code(404).send({
+      error: "INVESTMENT_NOT_FOUND",
+      message: error.message,
+    });
+  }
+  if (error instanceof NetWorthItemNotFoundError) {
+    return reply.code(404).send({
+      error: "NETWORTH_ITEM_NOT_FOUND",
       message: error.message,
     });
   }

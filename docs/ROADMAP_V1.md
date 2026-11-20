@@ -107,14 +107,14 @@
 ## Bloque 5: Analítica, Ahorro, Inversiones, Patrimonio y Exportación
 
 ### Seed 13 — Analítica (Diario, Semanal, Mensual, Trimestral, Anual) & Cálculo de Ahorro
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **100% Strict TDD**.
 - **Alcance:**
   - Motor de agregación por periodos (diario, semanal, mensual, trimestral, anual) en moneda principal.
   - Cálculo de ahorro neto y tasa de ahorro (%), gráficos en Recharts.
 
 ### Seed 14 — Inversiones (V1 Manual/Asistida), Patrimonio Neto (Activos + Pasivos) & Export CSV
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia — Bloque 5 completado)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Registro/edición de inversiones (crypto, acciones, ETFs, fondos) sin feed en vivo en V1.
