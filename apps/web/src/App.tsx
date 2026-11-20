@@ -44,6 +44,7 @@ import {
   registerWithEmail,
   runDueRecurringRulesRemote,
 } from "./api/client.js";
+import { AnalyticsPanel } from "./components/AnalyticsPanel.js";
 import {
   createOfflineDb,
   type LocalAccount,
@@ -657,6 +658,14 @@ export function App() {
                 </p>
               </div>
             </section>
+
+            {/* Analytics & Savings Panel (Recharts, 100% offline-first) */}
+            <AnalyticsPanel
+              transactions={transactions}
+              categories={categories}
+              preferences={preferences}
+              {...(fxSnapshot ? { fxSnapshot } : {})}
+            />
 
             {/* Accounts & New Transaction Grid */}
             <div className="grid gap-6 lg:grid-cols-2">

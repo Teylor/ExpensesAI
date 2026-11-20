@@ -15,6 +15,7 @@ import type { CategoriesService } from "./categories/service.js";
 import type { CommandBus } from "./commands/bus.js";
 import type { RecurringService } from "./recurring/service.js";
 import { registerAccountRoutes } from "./routes/accounts.js";
+import { registerAnalyticsRoutes } from "./routes/analytics.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerCommandRoutes } from "./routes/commands.js";
 import { type FxRateReader, registerFxRoutes } from "./routes/fx.js";
@@ -193,6 +194,17 @@ export async function buildApp(
       registerRecurringRoutes(app, {
         authService: options.authService,
         recurringService: options.recurringService,
+        ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
+      });
+    }
+
+    if (options.transactionsService) {
+      registerAnalyticsRoutes(app, {
+        authService: options.authService,
+        transactionsService: options.transactionsService,
+        ...(options.categoriesService
+          ? { categoriesService: options.categoriesService }
+          : {}),
         ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
       });
     }

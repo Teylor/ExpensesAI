@@ -107,7 +107,7 @@
 ## Bloque 5: Analítica, Ahorro, Inversiones, Patrimonio y Exportación
 
 ### Seed 13 — Analítica (Diario, Semanal, Mensual, Trimestral, Anual) & Cálculo de Ahorro
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **100% Strict TDD**.
 - **Alcance:**
   - Motor de agregación por periodos (diario, semanal, mensual, trimestral, anual) en moneda principal.
