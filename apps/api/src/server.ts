@@ -1,5 +1,15 @@
+import {
+  AccountsService,
+  PostgresAccountsRepository,
+  registerAccountCommandHandlers,
+} from "./accounts/service.js";
 import { buildApp } from "./app.js";
 import { AuthService, PostgresAuthRepository } from "./auth/service.js";
+import {
+  CategoriesService,
+  PostgresCategoriesRepository,
+  registerCategoryCommandHandlers,
+} from "./categories/service.js";
 import { CommandBus, PostgresCommandLogRepository } from "./commands/bus.js";
 import { loadEnvFilesIfPresent, parseEnv } from "./config/env.js";
 import { createDbClient } from "./db/client.js";
@@ -15,6 +25,18 @@ import {
   flushSentry,
   initSentry,
 } from "./observability/sentry.js";
+import { startRecurringScheduler } from "./recurring/scheduler.js";
+import {
+  PostgresRecurringAdvisoryLock,
+  PostgresRecurringRepository,
+  RecurringService,
+  registerRecurringCommandHandlers,
+} from "./recurring/service.js";
+import {
+  PostgresTransactionsRepository,
+  registerTransactionCommandHandlers,
+  TransactionsService,
+} from "./transactions/service.js";
 
 async function start(): Promise<void> {
   loadEnvFilesIfPresent();
@@ -34,13 +56,41 @@ async function start(): Promise<void> {
   const commandBus = new CommandBus({
     repository: new PostgresCommandLogRepository(dbClient),
   });
+  const accountsRepository = new PostgresAccountsRepository(dbClient);
+  const accountsService = new AccountsService({
+    repository: accountsRepository,
+  });
+  const categoriesService = new CategoriesService({
+    repository: new PostgresCategoriesRepository(dbClient),
+  });
   const fxService = new FxService({
     repository: new PostgresFxRatesRepository(dbClient),
     provider: createDefaultFxProvider(),
     advisoryLock: new PostgresAdvisoryLock(dbClient),
   });
+  const transactionsService = new TransactionsService({
+    repository: new PostgresTransactionsRepository(dbClient),
+    accountsRepository,
+    getUserPreferences: (userId) => authService.getUserPreferences(userId),
+    fxRateReader: fxService,
+  });
+  const recurringService = new RecurringService({
+    repository: new PostgresRecurringRepository(dbClient),
+    accountsRepository,
+    getUserPreferences: (userId) => authService.getUserPreferences(userId),
+    commandBus,
+    advisoryLock: new PostgresRecurringAdvisoryLock(dbClient),
+  });
+  registerAccountCommandHandlers(commandBus, accountsService);
+  registerCategoryCommandHandlers(commandBus, categoriesService);
+  registerTransactionCommandHandlers(commandBus, transactionsService);
+  registerRecurringCommandHandlers(commandBus, recurringService);
   const fxScheduler = startFxDailyScheduler({
     fxService,
+    onError: captureExceptionSafe,
+  });
+  const recurringScheduler = startRecurringScheduler({
+    recurringService,
     onError: captureExceptionSafe,
   });
 
@@ -51,6 +101,10 @@ async function start(): Promise<void> {
     fxRateReader: fxService,
     authService,
     commandBus,
+    accountsService,
+    categoriesService,
+    transactionsService,
+    recurringService,
     secureCookies: env.NODE_ENV === "production",
     onError: captureExceptionSafe,
   });
@@ -64,6 +118,7 @@ async function start(): Promise<void> {
     app.log.info({ signal }, "Graceful shutdown initiated");
     try {
       fxScheduler.stop();
+      recurringScheduler.stop();
       await app.close();
       await dbClient.close();
       await flushSentry();

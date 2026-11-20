@@ -2,16 +2,23 @@ import {
   commandBatchRequestSchema,
   commandEnvelopeSchema,
 } from "@agenticf/domain";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
+import { AccountNotFoundError } from "../accounts/service.js";
 import type { AuthService } from "../auth/service.js";
+import { CategoryNotFoundError } from "../categories/service.js";
 import {
   CommandAlreadyUndoneError,
   type CommandBus,
   CommandHandlerNotFoundError,
   CommandNotFoundError,
 } from "../commands/bus.js";
+import { RecurringRuleNotFoundError } from "../recurring/service.js";
+import {
+  AccountCurrencyMismatchError,
+  TransactionNotFoundError,
+} from "../transactions/service.js";
 import { requireAuthenticatedUser } from "./auth.js";
 
 export interface RegisterCommandRoutesOptions {
@@ -26,6 +33,58 @@ const undoParamsSchema = z.object({
 const historyQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
+
+function handleCommandRouteError(reply: FastifyReply, error: unknown) {
+  if (error instanceof CommandHandlerNotFoundError) {
+    return reply.code(501).send({
+      error: "COMMAND_NOT_IMPLEMENTED",
+      message: error.message,
+    });
+  }
+  if (error instanceof CommandNotFoundError) {
+    return reply.code(404).send({
+      error: "COMMAND_NOT_FOUND",
+      message: error.message,
+    });
+  }
+  if (error instanceof AccountNotFoundError) {
+    return reply.code(404).send({
+      error: "ACCOUNT_NOT_FOUND",
+      message: error.message,
+    });
+  }
+  if (error instanceof CategoryNotFoundError) {
+    return reply.code(404).send({
+      error: "CATEGORY_NOT_FOUND",
+      message: error.message,
+    });
+  }
+  if (error instanceof TransactionNotFoundError) {
+    return reply.code(404).send({
+      error: "TRANSACTION_NOT_FOUND",
+      message: error.message,
+    });
+  }
+  if (error instanceof RecurringRuleNotFoundError) {
+    return reply.code(404).send({
+      error: "RECURRING_RULE_NOT_FOUND",
+      message: error.message,
+    });
+  }
+  if (error instanceof AccountCurrencyMismatchError) {
+    return reply.code(400).send({
+      error: "ACCOUNT_CURRENCY_MISMATCH",
+      message: error.message,
+    });
+  }
+  if (error instanceof CommandAlreadyUndoneError) {
+    return reply.code(409).send({
+      error: "COMMAND_ALREADY_UNDONE",
+      message: error.message,
+    });
+  }
+  throw error;
+}
 
 export function registerCommandRoutes(
   app: FastifyInstance,
@@ -50,25 +109,7 @@ export function registerCommandRoutes(
         const statusCode = result.status === "applied" ? 201 : 200;
         return reply.code(statusCode).send(result);
       } catch (error) {
-        if (error instanceof CommandHandlerNotFoundError) {
-          return reply.code(501).send({
-            error: "COMMAND_NOT_IMPLEMENTED",
-            message: error.message,
-          });
-        }
-        if (error instanceof CommandNotFoundError) {
-          return reply.code(404).send({
-            error: "COMMAND_NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof CommandAlreadyUndoneError) {
-          return reply.code(409).send({
-            error: "COMMAND_ALREADY_UNDONE",
-            message: error.message,
-          });
-        }
-        throw error;
+        return handleCommandRouteError(reply, error);
       }
     },
   );
@@ -91,25 +132,7 @@ export function registerCommandRoutes(
         );
         return reply.code(200).send({ results });
       } catch (error) {
-        if (error instanceof CommandHandlerNotFoundError) {
-          return reply.code(501).send({
-            error: "COMMAND_NOT_IMPLEMENTED",
-            message: error.message,
-          });
-        }
-        if (error instanceof CommandNotFoundError) {
-          return reply.code(404).send({
-            error: "COMMAND_NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof CommandAlreadyUndoneError) {
-          return reply.code(409).send({
-            error: "COMMAND_ALREADY_UNDONE",
-            message: error.message,
-          });
-        }
-        throw error;
+        return handleCommandRouteError(reply, error);
       }
     },
   );
@@ -133,25 +156,7 @@ export function registerCommandRoutes(
         );
         return reply.code(200).send(undone);
       } catch (error) {
-        if (error instanceof CommandNotFoundError) {
-          return reply.code(404).send({
-            error: "COMMAND_NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof CommandAlreadyUndoneError) {
-          return reply.code(409).send({
-            error: "COMMAND_ALREADY_UNDONE",
-            message: error.message,
-          });
-        }
-        if (error instanceof CommandHandlerNotFoundError) {
-          return reply.code(501).send({
-            error: "COMMAND_NOT_IMPLEMENTED",
-            message: error.message,
-          });
-        }
-        throw error;
+        return handleCommandRouteError(reply, error);
       }
     },
   );

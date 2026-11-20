@@ -77,26 +77,26 @@
 ## Bloque 4: Core Financiero V1 (Cuentas, Movimientos, Offline-First y Recurrentes)
 
 ### Seed 09 — Cuentas (Bancos, Efectivo, Ahorro, Crédito) & Saldos Consolidados
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - CRUD de cuentas en cualquier moneda, cálculo de **Saldo por Cuenta**, **Saldo en Efectivo** y **Saldo Total** en moneda principal (con paréntesis multimoneda).
 
 ### Seed 10 — Ingresos, Gastos, Categorías & Transferencias entre Cuentas
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Gestión de ingresos/gastos con tipo y categoría, transferencias entre cuentas propias (sin inflar gastos ni ingresos).
   - Campos `source` (`manual | agent | recurring | csv_import | bank_sync`) y `externalId` preparados para V2 + botón de Undo inmediato.
 
 ### Seed 11 — PWA Offline-First: IndexedDB (`Dexie.js`) + Cola `Outbox` & Sincronización
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD** en la máquina de estados de la cola `Outbox`.
 - **Alcance:**
   - `vite-plugin-pwa` (Workbox), almacenamiento local `Dexie.js`, ejecución optimista de comandos manuales offline y sync idempotente al reconectar.
 
 ### Seed 12 — Gastos e Ingresos Recurrentes (Nóminas, Suscripciones, Alquiler)
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia — Bloque 4 completado)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - Reglas recurrentes (diaria, semanal, mensual día X, trimestral, anual) respetando zona horaria (incl. meses de 28/30/31 días).

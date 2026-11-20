@@ -29,6 +29,27 @@
       "when": 1795120646573,
       "tag": "0003_amusing_silver_centurion",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795121576524,
+      "tag": "0004_daily_magneto",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795121922742,
+      "tag": "0005_yummy_slapstick",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795123677185,
+      "tag": "0006_parched_millenium_guard",
+      "breakpoints": true
     }
   ]
 }

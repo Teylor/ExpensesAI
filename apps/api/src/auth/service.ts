@@ -218,13 +218,17 @@ export class AuthService {
     await this.repository.deleteSessionById(sessionId);
   }
 
+  async getUserPreferences(userId: string): Promise<UserPreferences> {
+    return (
+      (await this.repository.getPreferences(userId)) ?? DEFAULT_USER_PREFERENCES
+    );
+  }
+
   async updatePreferences(
     userId: string,
     patch: UpdateUserPreferencesInput,
   ): Promise<UserPreferences> {
-    const current =
-      (await this.repository.getPreferences(userId)) ??
-      DEFAULT_USER_PREFERENCES;
+    const current = await this.getUserPreferences(userId);
     const merged = mergeUserPreferences(current, patch);
     await this.repository.upsertPreferences(userId, merged);
     return merged;

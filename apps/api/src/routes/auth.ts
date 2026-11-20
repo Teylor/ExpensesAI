@@ -1,6 +1,7 @@
 import {
   loginRequestSchema,
   registerRequestSchema,
+  type UserPreferences,
   updateUserPreferencesSchema,
 } from "@agenticf/domain";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -18,6 +19,10 @@ export const SESSION_COOKIE_NAME = "agenticf_session";
 export interface RegisterAuthRoutesOptions {
   authService: AuthService;
   secureCookies: boolean;
+  onUserRegistered?: (
+    userId: string,
+    preferences: UserPreferences,
+  ) => Promise<void>;
 }
 
 function setSessionCookie(
@@ -66,7 +71,7 @@ export function registerAuthRoutes(
   options: RegisterAuthRoutesOptions,
 ): void {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
-  const { authService, secureCookies } = options;
+  const { authService, secureCookies, onUserRegistered } = options;
 
   const authRateLimitConfig = {
     rateLimit: {
@@ -86,6 +91,9 @@ export function registerAuthRoutes(
     async (request, reply) => {
       try {
         const result = await authService.register(request.body);
+        if (onUserRegistered) {
+          await onUserRegistered(result.user.id, result.preferences);
+        }
         setSessionCookie(
           reply,
           result.sessionToken,
