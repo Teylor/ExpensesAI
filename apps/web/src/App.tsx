@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import {
+  completeChatGptOAuthCallback,
   createHttpOutboxTransport,
   fetchCurrentUser,
   hydrateOfflineDbFromServer,
@@ -43,7 +44,9 @@ import {
   patchUserPreferences,
   registerWithEmail,
   runDueRecurringRulesRemote,
+  startChatGptOAuthFlow,
 } from "./api/client.js";
+import { AgentFloatingDock } from "./components/AgentFloatingDock.js";
 import { AnalyticsPanel } from "./components/AnalyticsPanel.js";
 import { WealthAndExportPanel } from "./components/WealthAndExportPanel.js";
 import {
@@ -190,6 +193,31 @@ export function App() {
   useEffect(() => {
     void (async () => {
       await reloadLocalState();
+
+      const params = new URLSearchParams(window.location.search);
+      const oauthCode = params.get("code");
+      const oauthState = params.get("state");
+      if (oauthCode && oauthState) {
+        try {
+          const cb = await completeChatGptOAuthCallback(oauthState, oauthCode);
+          window.history.replaceState({}, "", "/");
+          if (cb.user && cb.preferences) {
+            setUser(cb.user);
+            await offlineDb.savePreferences(cb.preferences);
+            await hydrateOfflineDbFromServer(offlineDb);
+            await reloadLocalState();
+            return;
+          }
+        } catch (err) {
+          setAuthError(
+            err instanceof Error
+              ? err.message
+              : "Error completando Sign in with ChatGPT",
+          );
+          window.history.replaceState({}, "", "/");
+        }
+      }
+
       const me = await fetchCurrentUser();
       if (me) {
         setUser(me.user);
@@ -286,12 +314,35 @@ export function App() {
     await reloadLocalState();
   };
 
+  const handleSignInWithChatGpt = async () => {
+    setAuthError(null);
+    try {
+      const { authorizationUrl } = await startChatGptOAuthFlow();
+      window.location.assign(authorizationUrl);
+    } catch (err) {
+      setAuthError(
+        err instanceof Error
+          ? err.message
+          : "Error iniciando Sign in with ChatGPT (requiere backend conectado)",
+      );
+    }
+  };
+
   const handleToggleLocale = async (nextLocale: SupportedLocale) => {
     const nextPrefs = { ...preferences, locale: nextLocale };
     await offlineDb.savePreferences(nextPrefs);
     setPreferences(nextPrefs);
     if (isOnline && user) {
       await patchUserPreferences({ locale: nextLocale });
+    }
+  };
+
+  const handleToggleAgentConfirm = async (enabled: boolean) => {
+    const nextPrefs = { ...preferences, agentConfirmEnabled: enabled };
+    await offlineDb.savePreferences(nextPrefs);
+    setPreferences(nextPrefs);
+    if (isOnline && user) {
+      await patchUserPreferences({ agentConfirmEnabled: enabled });
     }
   };
 
@@ -615,6 +666,16 @@ export function App() {
                 {authMode === "login" ? "Entrar" : "Registrarme"}
               </button>
             </form>
+
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => void handleSignInWithChatGpt()}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800"
+              >
+                <span>Sign in with ChatGPT (Plan Sharing)</span>
+              </button>
+            </div>
 
             <div className="mt-4 flex items-center justify-between text-xs text-zinc-400">
               <button
@@ -1228,6 +1289,19 @@ export function App() {
           </div>
         )}
       </main>
+
+      {(user || offlineGuest) && (
+        <AgentFloatingDock
+          isOnline={isOnline}
+          isAuthenticated={Boolean(user)}
+          accounts={accounts}
+          formattedTotalBalance={balancesSummary.formattedTotalBalance}
+          preferences={preferences}
+          {...(fxSnapshot ? { fxSnapshot } : {})}
+          onDispatchCommand={dispatchCommand}
+          onToggleConfirmEnabled={handleToggleAgentConfirm}
+        />
+      )}
     </div>
   );
 }

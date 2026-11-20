@@ -10,11 +10,18 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import type { AccountsService } from "./accounts/service.js";
+import type { ChatGptOAuthService } from "./ai/oauth.js";
+import type {
+  AgentOrchestrator,
+  AiConnectionsRepository,
+} from "./ai/orchestrator.js";
+import type { SecretVault } from "./ai/vault.js";
 import type { AuthService } from "./auth/service.js";
 import type { CategoriesService } from "./categories/service.js";
 import type { CommandBus } from "./commands/bus.js";
 import type { RecurringService } from "./recurring/service.js";
 import { registerAccountRoutes } from "./routes/accounts.js";
+import { registerAiRoutes } from "./routes/ai.js";
 import { registerAnalyticsRoutes } from "./routes/analytics.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerCommandRoutes } from "./routes/commands.js";
@@ -37,6 +44,10 @@ export interface BuildAppOptions {
   transactionsService?: TransactionsService;
   recurringService?: RecurringService;
   wealthService?: WealthService;
+  aiConnectionsRepository?: AiConnectionsRepository;
+  secretVault?: SecretVault;
+  chatGptOAuthService?: ChatGptOAuthService;
+  agentOrchestrator?: AgentOrchestrator;
   secureCookies?: boolean;
   onError?: (error: unknown, context: Record<string, unknown>) => void;
 }
@@ -223,6 +234,32 @@ export async function buildApp(
           ? { transactionsService: options.transactionsService }
           : {}),
         ...(options.fxRateReader ? { fxRateReader: options.fxRateReader } : {}),
+      });
+    }
+
+    if (
+      options.aiConnectionsRepository &&
+      options.secretVault &&
+      options.chatGptOAuthService &&
+      options.agentOrchestrator
+    ) {
+      registerAiRoutes(app, {
+        authService: options.authService,
+        aiConnectionsRepository: options.aiConnectionsRepository,
+        secretVault: options.secretVault,
+        chatGptOAuthService: options.chatGptOAuthService,
+        agentOrchestrator: options.agentOrchestrator,
+        secureCookies: options.secureCookies ?? true,
+        ...(categoriesService
+          ? {
+              onUserRegistered: async (userId, preferences) => {
+                await categoriesService.seedDefaultCategories(
+                  userId,
+                  preferences.locale,
+                );
+              },
+            }
+          : {}),
       });
     }
   }

@@ -126,7 +126,7 @@
 ## Bloque 6: Agente Financiero (Plan Sharing + BYOK + Push-to-Talk + Guardrails) y Despliegue NAS
 
 ### Seed 15 — Conectores IA (*Sign in with ChatGPT Plan Sharing* + BYOK Cifrado) & Orquestador del Agente con Guardrails
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia)*
 - **Modo TDD:** **Strict TDD**.
 - **Alcance:**
   - OAuth 2.0 + PKCE con **Sign in with ChatGPT (Plan Sharing)** (login directo o vinculación desde Email+Password).
@@ -134,7 +134,7 @@
   - Orquestador con Vercel AI SDK conectado al `CommandBus` y **Guardrail estricto**: rechaza uso como chatbot generalista y genera propuesta de confirmación con impacto exacto (o ejecuta directo si está desactivada).
 
 ### Seed 16 — UI Omnicanal (Botón Siempre Visible Chat + Push-to-Talk Gratis), E2E Playwright & Pack NAS Ugreen DXP2800
-- **Estado:** ⚪ Pendiente
+- **Estado:** ✅ Harvested *(cerrado con evidencia — Bloque 6 y V1 100% completados)*
 - **Modo TDD:** E2E Playwright en flujos críticos; `[TDD-SKIP]` en estilos finales y guía de despliegue.
 - **Alcance:**
   - Botón flotante siempre visible con Chat + **Push-to-Talk (`Web Speech API` ES/EN)**.

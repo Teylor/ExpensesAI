@@ -21,6 +21,8 @@
 	}
 
 	handle {
-		respond "AgenticF API ready (PWA web bundle will be wired in Seed 11/16)" 200
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
 	}
 }

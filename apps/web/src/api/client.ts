@@ -322,3 +322,127 @@ export async function runDueRecurringRulesRemote(
     return null;
   }
 }
+
+export interface AiConnectionDto {
+  id: string;
+  kind: "chatgpt_oauth" | "byok";
+  provider: "openai" | "anthropic" | "openai_compatible";
+  label: string;
+  model: string;
+  baseUrl: string | null;
+  maskedPreview: string;
+  priority: number;
+  isActive: boolean;
+}
+
+export interface AgentChatApiResponse {
+  status:
+    | "answered"
+    | "confirmation_required"
+    | "executed"
+    | "rejected_guardrail"
+    | "quota_exhausted";
+  replyText: string;
+  usedConnectionKind: "chatgpt_oauth" | "byok" | null;
+  proposedCommand?: CommandEnvelope;
+  executedCommandId?: string;
+  impact?: {
+    summary: string;
+  };
+}
+
+export async function fetchAiConnections(
+  baseUrl = "",
+): Promise<AiConnectionDto[]> {
+  try {
+    const res = await fetch(`${baseUrl}/api/v1/ai/connections`, {
+      credentials: "include",
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { connections: AiConnectionDto[] };
+    return data.connections;
+  } catch {
+    return [];
+  }
+}
+
+export async function createByokConnection(
+  input: {
+    provider: "openai" | "anthropic" | "openai_compatible";
+    label: string;
+    model: string;
+    apiKey: string;
+    baseUrl?: string;
+  },
+  baseUrl = "",
+): Promise<AiConnectionDto> {
+  const res = await fetch(`${baseUrl}/api/v1/ai/connections/byok`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(await parseErrorMessage(res));
+  const data = (await res.json()) as { connection: AiConnectionDto };
+  return data.connection;
+}
+
+export async function deleteAiConnection(
+  connectionId: string,
+  baseUrl = "",
+): Promise<void> {
+  await fetch(`${baseUrl}/api/v1/ai/connections/${connectionId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+}
+
+export async function startChatGptOAuthFlow(
+  baseUrl = "",
+): Promise<{ authorizationUrl: string; state: string }> {
+  const res = await fetch(`${baseUrl}/api/v1/ai/oauth/chatgpt/start`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(await parseErrorMessage(res));
+  return (await res.json()) as { authorizationUrl: string; state: string };
+}
+
+export async function completeChatGptOAuthCallback(
+  state: string,
+  code: string,
+  baseUrl = "",
+): Promise<{
+  user?: PublicUserDto;
+  preferences?: UserPreferences;
+}> {
+  const res = await fetch(`${baseUrl}/api/v1/ai/oauth/chatgpt/callback`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ state, code }),
+  });
+  if (!res.ok) throw new Error(await parseErrorMessage(res));
+  return (await res.json()) as {
+    user?: PublicUserDto;
+    preferences?: UserPreferences;
+  };
+}
+
+export async function sendAgentChatRemote(
+  message: string,
+  baseUrl = "",
+): Promise<AgentChatApiResponse | null> {
+  try {
+    const res = await fetch(`${baseUrl}/api/v1/ai/agent/chat`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as AgentChatApiResponse;
+  } catch {
+    return null;
+  }
+}
