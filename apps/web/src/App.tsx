@@ -44,6 +44,7 @@ import {
   registerWithEmail,
   runDueRecurringRulesRemote,
 } from "./api/client.js";
+import { AgentFloatingDock } from "./components/AgentFloatingDock.js";
 import { AnalyticsPanel } from "./components/AnalyticsPanel.js";
 import { WealthAndExportPanel } from "./components/WealthAndExportPanel.js";
 import {
@@ -292,6 +293,15 @@ export function App() {
     setPreferences(nextPrefs);
     if (isOnline && user) {
       await patchUserPreferences({ locale: nextLocale });
+    }
+  };
+
+  const handleToggleAgentConfirm = async (enabled: boolean) => {
+    const nextPrefs = { ...preferences, agentConfirmEnabled: enabled };
+    await offlineDb.savePreferences(nextPrefs);
+    setPreferences(nextPrefs);
+    if (isOnline && user) {
+      await patchUserPreferences({ agentConfirmEnabled: enabled });
     }
   };
 
@@ -1228,6 +1238,19 @@ export function App() {
           </div>
         )}
       </main>
+
+      {(user || offlineGuest) && (
+        <AgentFloatingDock
+          isOnline={isOnline}
+          isAuthenticated={Boolean(user)}
+          accounts={accounts}
+          formattedTotalBalance={balancesSummary.formattedTotalBalance}
+          preferences={preferences}
+          {...(fxSnapshot ? { fxSnapshot } : {})}
+          onDispatchCommand={dispatchCommand}
+          onToggleConfirmEnabled={handleToggleAgentConfirm}
+        />
+      )}
     </div>
   );
 }
