@@ -37,6 +37,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    allowedHosts: [".ts.net"],
     ...(process.env.CHOKIDAR_USEPOLLING === "true"
       ? {
           watch: {

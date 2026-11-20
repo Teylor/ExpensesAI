@@ -365,4 +365,118 @@ describe("AI Connectors (ChatGPT OAuth Plan Sharing + BYOK) & Agent Chat REST ro
       await app.close();
     }
   });
+
+  it("supports comma-separated CORS_ORIGIN and resolves ChatGPT OAuth redirectUri per allowed origin", async () => {
+    const ctx = createTestWiring();
+    const observedRedirectUris: string[] = [];
+    const customOAuth = new ChatGptOAuthService({
+      repository: {
+        saveState: async (r) => {
+          (
+            ctx as unknown as {
+              _states?: Map<
+                string,
+                {
+                  encryptedCodeVerifier: string;
+                  userId: string | null;
+                  expiresAt: Date;
+                }
+              >;
+            }
+          )._states ??= new Map();
+          (
+            ctx as unknown as {
+              _states: Map<
+                string,
+                {
+                  encryptedCodeVerifier: string;
+                  userId: string | null;
+                  expiresAt: Date;
+                }
+              >;
+            }
+          )._states.set(r.stateHash, r);
+        },
+        consumeState: async (stateHash) => {
+          const map = (
+            ctx as unknown as {
+              _states?: Map<
+                string,
+                {
+                  stateHash: string;
+                  encryptedCodeVerifier: string;
+                  userId: string | null;
+                  expiresAt: Date;
+                }
+              >;
+            }
+          )._states;
+          const item = map?.get(stateHash) ?? null;
+          map?.delete(stateHash);
+          return item;
+        },
+      },
+      vault: ctx.secretVault,
+      exchangeCodeFn: async ({ code, redirectUri }) => {
+        observedRedirectUris.push(redirectUri);
+        return {
+          accessToken: `tok_${code}`,
+          email: "mobile@agenticf.local",
+          displayName: "Mobile User",
+          model: "gpt-4o-mini",
+        };
+      },
+    });
+
+    const app = await buildApp({
+      corsOrigin: "http://localhost:5173,https://example.ts.net:8443",
+      logLevel: "silent",
+      checkDatabase: async () => true,
+      ...ctx,
+      chatGptOAuthService: customOAuth,
+    });
+
+    try {
+      const allowedStart = await app.inject({
+        method: "POST",
+        url: "/api/v1/ai/oauth/chatgpt/start",
+        headers: { origin: "https://example.ts.net:8443" },
+      });
+      expect(allowedStart.statusCode).toBe(200);
+      expect(allowedStart.headers["access-control-allow-origin"]).toBe(
+        "https://example.ts.net:8443",
+      );
+      const allowedAuthUrl = new URL(allowedStart.json().authorizationUrl);
+      expect(allowedAuthUrl.searchParams.get("redirect_uri")).toBe(
+        "https://example.ts.net:8443/oauth/chatgpt/callback",
+      );
+
+      const allowedCallback = await app.inject({
+        method: "POST",
+        url: "/api/v1/ai/oauth/chatgpt/callback",
+        headers: { origin: "https://example.ts.net:8443" },
+        payload: {
+          state: allowedStart.json().state,
+          code: "mobile-code",
+        },
+      });
+      expect(allowedCallback.statusCode).toBe(200);
+      expect(observedRedirectUris).toEqual([
+        "https://example.ts.net:8443/oauth/chatgpt/callback",
+      ]);
+
+      const untrustedStart = await app.inject({
+        method: "POST",
+        url: "/api/v1/ai/oauth/chatgpt/start",
+        headers: { origin: "https://evil.example" },
+      });
+      expect(untrustedStart.statusCode).toBe(200);
+      const untrustedAuthUrl = new URL(untrustedStart.json().authorizationUrl);
+      expect(untrustedAuthUrl.searchParams.get("redirect_uri")).toBe(
+        "http://localhost:5173/oauth/chatgpt/callback",
+      );
+    } finally {
+      await app.close();
+    }
+  });
 });
