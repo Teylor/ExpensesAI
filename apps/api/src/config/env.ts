@@ -33,16 +33,31 @@ const emptyToUndefined = (value: unknown): unknown => {
   return value;
 };
 
+const normalizeEnumInput = (value: unknown): unknown => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const trimmed = value
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .trim();
+  return trimmed === "" ? undefined : trimmed.toLowerCase();
+};
+
 const envSchema = z
   .object({
-    NODE_ENV: z
-      .enum(["development", "test", "production"])
-      .default("development"),
+    NODE_ENV: z.preprocess(
+      normalizeEnumInput,
+      z.enum(["development", "test", "production"]).default("development"),
+    ),
     HOST: z.string().min(1).default("0.0.0.0"),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-    LOG_LEVEL: z
-      .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
-      .default("info"),
+    LOG_LEVEL: z.preprocess(
+      normalizeEnumInput,
+      z
+        .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+        .default("info"),
+    ),
     DATABASE_URL: z
       .string({
         error:

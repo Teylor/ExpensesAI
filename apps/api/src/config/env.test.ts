@@ -105,6 +105,22 @@ describe("parseEnv (12-factor stateless config)", () => {
       }),
     ).toThrow(/CORS_ORIGIN/i);
   });
+
+  it("normalizes empty, quoted, uppercase, or whitespace-padded LOG_LEVEL and NODE_ENV", () => {
+    const emptyLevel = parseEnv({
+      ...VALID_BASE_ENV,
+      LOG_LEVEL: "",
+      NODE_ENV: "PRODUCTION ",
+    });
+    expect(emptyLevel.LOG_LEVEL).toBe("info");
+    expect(emptyLevel.NODE_ENV).toBe("production");
+
+    const quotedLevel = parseEnv({
+      ...VALID_BASE_ENV,
+      LOG_LEVEL: ' "DEBUG"\r',
+    });
+    expect(quotedLevel.LOG_LEVEL).toBe("debug");
+  });
 });
 
 describe("loadEnvFilesIfPresent", () => {
