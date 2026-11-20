@@ -19,5 +19,103 @@ services:
       timeout: 5s
       retries: 10
 
+  deps:
+    build:
+      context: ..
+      dockerfile: docker/dev.Dockerfile
+    container_name: agenticf-deps-dev
+    restart: "no"
+    working_dir: /app
+    command: >
+      sh -c "pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @agenticf/domain build"
+    volumes:
+      - ..:/app
+      - agenticf_dev_pnpm_store:/root/.local/share/pnpm/store
+      - agenticf_dev_root_nm:/app/node_modules
+      - agenticf_dev_domain_nm:/app/packages/domain/node_modules
+      - agenticf_dev_api_nm:/app/apps/api/node_modules
+      - agenticf_dev_web_nm:/app/apps/web/node_modules
+
+  domain:
+    build:
+      context: ..
+      dockerfile: docker/dev.Dockerfile
+    container_name: agenticf-domain-dev
+    restart: unless-stopped
+    working_dir: /app
+    command: pnpm --filter @agenticf/domain dev
+    environment:
+      TSC_WATCHFILE: UseFsEventsWithFallbackDynamicPolling
+    volumes:
+      - ..:/app
+      - agenticf_dev_root_nm:/app/node_modules
+      - agenticf_dev_domain_nm:/app/packages/domain/node_modules
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/dev.Dockerfile
+    container_name: agenticf-api-dev
+    restart: unless-stopped
+    working_dir: /app
+    command: pnpm --filter @agenticf/api dev
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-agenticf}:${POSTGRES_PASSWORD:-change_me_local_dev_only}@postgres:5432/${POSTGRES_DB:-agenticf}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      AI_VAULT_SECRET: ${AI_VAULT_SECRET:-change_me_at_least_16_chars_for_aes_256_gcm}
+      CHATGPT_OAUTH_CLIENT_ID: ${CHATGPT_OAUTH_CLIENT_ID:-dynamic_agent_client}
+      CHATGPT_OAUTH_REDIRECT_URI: ${CHATGPT_OAUTH_REDIRECT_URI:-http://localhost:5173/oauth/chatgpt/callback}
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
+    volumes:
+      - ..:/app
+      - agenticf_dev_root_nm:/app/node_modules
+      - agenticf_dev_domain_nm:/app/packages/domain/node_modules
+      - agenticf_dev_api_nm:/app/apps/api/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      deps:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/dev.Dockerfile
+    container_name: agenticf-web-dev
+    restart: unless-stopped
+    working_dir: /app
+    command: pnpm --filter @agenticf/web dev -- --host 0.0.0.0 --port 5173
+    ports:
+      - "5173:5173"
+    environment:
+      API_PROXY_TARGET: http://api:3000
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
+    volumes:
+      - ..:/app
+      - agenticf_dev_root_nm:/app/node_modules
+      - agenticf_dev_domain_nm:/app/packages/domain/node_modules
+      - agenticf_dev_web_nm:/app/apps/web/node_modules
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      api:
+        condition: service_started
+
 volumes:
   agenticf_pgdata_dev:
+  agenticf_dev_pnpm_store:
+  agenticf_dev_root_nm:
+  agenticf_dev_domain_nm:
+  agenticf_dev_api_nm:
+  agenticf_dev_web_nm:

@@ -17,7 +17,9 @@
     "test": "turbo run test",
     "security:secrets": "secretlint \"**/*\"",
     "security:audit": "pnpm audit --audit-level=high",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm security:secrets"
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm security:secrets",
+    "docker:dev": "docker compose -f docker/compose.dev.yml up",
+    "docker:dev:down": "docker compose -f docker/compose.dev.yml down"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",
