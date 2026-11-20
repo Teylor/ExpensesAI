@@ -22,11 +22,22 @@ export interface RegisterAiRoutesOptions {
   secretVault: SecretVault;
   chatGptOAuthService: ChatGptOAuthService;
   agentOrchestrator: AgentOrchestrator;
+  allowedOrigins?: string[];
   secureCookies?: boolean;
   onUserRegistered?: (
     userId: string,
     preferences: UserPreferences,
   ) => Promise<void>;
+}
+
+function resolveOAuthRedirectUri(
+  originHeader: string | undefined,
+  allowedOrigins?: string[],
+): string | undefined {
+  if (!originHeader || !allowedOrigins?.includes(originHeader)) {
+    return undefined;
+  }
+  return `${originHeader.replace(/\/+$/, "")}/oauth/chatgpt/callback`;
 }
 
 const byokBodySchema = z.object({
@@ -158,8 +169,13 @@ export function registerAiRoutes(
   typedApp.post("/api/v1/ai/oauth/chatgpt/start", async (request, reply) => {
     const token = request.cookies[SESSION_COOKIE_NAME];
     const auth = await authService.authenticateSession(token);
+    const redirectUriOverride = resolveOAuthRedirectUri(
+      request.headers.origin,
+      options.allowedOrigins,
+    );
     const result = await chatGptOAuthService.startAuthorization(
       auth?.user.id ?? null,
+      redirectUriOverride,
     );
     return reply.code(200).send(result);
   });
@@ -173,9 +189,14 @@ export function registerAiRoutes(
     },
     async (request, reply) => {
       try {
-        const exchanged = await chatGptOAuthService.completeAuthorization(
-          request.body,
+        const redirectUriOverride = resolveOAuthRedirectUri(
+          request.headers.origin,
+          options.allowedOrigins,
         );
+        const exchanged = await chatGptOAuthService.completeAuthorization({
+          ...request.body,
+          ...(redirectUriOverride ? { redirectUri: redirectUriOverride } : {}),
+        });
 
         const token = request.cookies[SESSION_COOKIE_NAME];
         const currentAuth = await authService.authenticateSession(token);

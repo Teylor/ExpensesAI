@@ -76,8 +76,20 @@ export async function buildApp(
     contentSecurityPolicy: false,
   });
 
+  const parsedOrigins = options.corsOrigin
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+  const [firstOrigin] = parsedOrigins;
+  const corsOriginOption: string | string[] =
+    firstOrigin === undefined
+      ? options.corsOrigin
+      : parsedOrigins.length === 1
+        ? firstOrigin
+        : parsedOrigins;
+
   await app.register(cors, {
-    origin: options.corsOrigin,
+    origin: corsOriginOption,
     credentials: true,
   });
 
@@ -249,6 +261,7 @@ export async function buildApp(
         secretVault: options.secretVault,
         chatGptOAuthService: options.chatGptOAuthService,
         agentOrchestrator: options.agentOrchestrator,
+        allowedOrigins: parsedOrigins,
         secureCookies: options.secureCookies ?? true,
         ...(categoriesService
           ? {
