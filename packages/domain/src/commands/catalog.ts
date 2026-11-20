@@ -135,6 +135,10 @@ const investmentUpsertPayloadSchema = z.object({
   currency: currencyCodeSchema,
 });
 
+const investmentDeletePayloadSchema = z.object({
+  investmentId: z.uuid(),
+});
+
 const netWorthUpsertPayloadSchema = z.object({
   itemId: z.uuid().optional(),
   kind: z.enum(NET_WORTH_KINDS),
@@ -142,6 +146,10 @@ const netWorthUpsertPayloadSchema = z.object({
   name: z.string().trim().min(1).max(120),
   estimatedValue: positiveDecimalStringSchema,
   currency: currencyCodeSchema,
+});
+
+const netWorthDeletePayloadSchema = z.object({
+  itemId: z.uuid(),
 });
 
 const categoryUpsertPayloadSchema = z.object({
@@ -208,8 +216,18 @@ export const commandEnvelopeSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     ...commandMetaFields,
+    type: z.literal("investment.delete"),
+    payload: investmentDeletePayloadSchema,
+  }),
+  z.object({
+    ...commandMetaFields,
     type: z.literal("networth.upsert"),
     payload: netWorthUpsertPayloadSchema,
+  }),
+  z.object({
+    ...commandMetaFields,
+    type: z.literal("networth.delete"),
+    payload: netWorthDeletePayloadSchema,
   }),
   z.object({
     ...commandMetaFields,

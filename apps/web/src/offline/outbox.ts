@@ -13,6 +13,8 @@ import type {
   AgenticfOfflineDb,
   LocalAccount,
   LocalCategory,
+  LocalInvestment,
+  LocalNetWorthItem,
   LocalRecurringRule,
   LocalTransaction,
 } from "./db.js";
@@ -499,6 +501,76 @@ export class OutboxSyncEngine {
         return { kind: "restore_recurring", rule: prev };
       }
 
+      case "investment.upsert": {
+        const investmentId =
+          envelope.payload.investmentId ?? randomIdFallback();
+        const prev = await this.db.investments.get(investmentId);
+        const currency = normalizeCurrencyCode(envelope.payload.currency);
+        const next: LocalInvestment = {
+          id: investmentId,
+          assetType: envelope.payload.assetType.trim(),
+          name: envelope.payload.name.trim(),
+          symbol: envelope.payload.symbol?.trim() ?? prev?.symbol ?? null,
+          quantity: envelope.payload.quantity ?? prev?.quantity ?? null,
+          investedAmount: createMoney(envelope.payload.investedAmount, currency)
+            .amount,
+          currentValue: createMoney(envelope.payload.currentValue, currency)
+            .amount,
+          currency,
+          deletedAt: null,
+          updatedAt: nowIso,
+        };
+        await this.db.investments.put(next);
+        return prev
+          ? { kind: "restore_investment", item: prev }
+          : { kind: "delete_investment", investmentId };
+      }
+
+      case "investment.delete": {
+        const prev = await this.db.investments.get(
+          envelope.payload.investmentId,
+        );
+        if (!prev) return null;
+        await this.db.investments.put({
+          ...prev,
+          deletedAt: nowIso,
+          updatedAt: nowIso,
+        });
+        return { kind: "restore_investment", item: prev };
+      }
+
+      case "networth.upsert": {
+        const itemId = envelope.payload.itemId ?? randomIdFallback();
+        const prev = await this.db.netWorthItems.get(itemId);
+        const currency = normalizeCurrencyCode(envelope.payload.currency);
+        const next: LocalNetWorthItem = {
+          id: itemId,
+          kind: envelope.payload.kind,
+          category: envelope.payload.category.trim(),
+          name: envelope.payload.name.trim(),
+          estimatedValue: createMoney(envelope.payload.estimatedValue, currency)
+            .amount,
+          currency,
+          deletedAt: null,
+          updatedAt: nowIso,
+        };
+        await this.db.netWorthItems.put(next);
+        return prev
+          ? { kind: "restore_networth", item: prev }
+          : { kind: "delete_networth", itemId };
+      }
+
+      case "networth.delete": {
+        const prev = await this.db.netWorthItems.get(envelope.payload.itemId);
+        if (!prev) return null;
+        await this.db.netWorthItems.put({
+          ...prev,
+          deletedAt: nowIso,
+          updatedAt: nowIso,
+        });
+        return { kind: "restore_networth", item: prev };
+      }
+
       default:
         return null;
     }
@@ -584,6 +656,22 @@ export class OutboxSyncEngine {
       }
       case "restore_recurring": {
         await this.db.recurringRules.put(snapshot.rule as LocalRecurringRule);
+        break;
+      }
+      case "delete_investment": {
+        await this.db.investments.delete(String(snapshot.investmentId));
+        break;
+      }
+      case "restore_investment": {
+        await this.db.investments.put(snapshot.item as LocalInvestment);
+        break;
+      }
+      case "delete_networth": {
+        await this.db.netWorthItems.delete(String(snapshot.itemId));
+        break;
+      }
+      case "restore_networth": {
+        await this.db.netWorthItems.put(snapshot.item as LocalNetWorthItem);
         break;
       }
     }

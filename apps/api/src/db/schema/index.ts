@@ -5,3 +5,4 @@ export * from "./recurring.js";
 export * from "./system.js";
 export * from "./transactions.js";
 export * from "./users.js";
+export * from "./wealth.js";

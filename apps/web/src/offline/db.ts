@@ -5,6 +5,7 @@ import {
   DEFAULT_USER_PREFERENCES,
   type FinancialPeriod,
   type FxRateSnapshot,
+  type NetWorthKind,
   type TransactionSource,
   type UserPreferences,
 } from "@agenticf/domain";
@@ -69,6 +70,30 @@ export interface LocalRecurringRule {
   updatedAt: string;
 }
 
+export interface LocalInvestment {
+  id: string;
+  assetType: string;
+  name: string;
+  symbol: string | null;
+  quantity: string | null;
+  investedAmount: string;
+  currentValue: string;
+  currency: string;
+  deletedAt: string | null;
+  updatedAt: string;
+}
+
+export interface LocalNetWorthItem {
+  id: string;
+  kind: NetWorthKind;
+  category: string;
+  name: string;
+  estimatedValue: string;
+  currency: string;
+  deletedAt: string | null;
+  updatedAt: string;
+}
+
 export type OutboxItemStatus = "pending" | "syncing" | "synced" | "failed";
 
 export interface OutboxEntry {
@@ -92,6 +117,8 @@ export class AgenticfOfflineDb extends Dexie {
   categories!: Table<LocalCategory, string>;
   transactions!: Table<LocalTransaction, string>;
   recurringRules!: Table<LocalRecurringRule, string>;
+  investments!: Table<LocalInvestment, string>;
+  netWorthItems!: Table<LocalNetWorthItem, string>;
   outbox!: Table<OutboxEntry, string>;
   kv!: Table<StoredKvRow, string>;
 
@@ -104,6 +131,8 @@ export class AgenticfOfflineDb extends Dexie {
         "id, kind, accountId, destinationAccountId, categoryId, localDate, occurredAtUtc, deletedAt",
       recurringRules:
         "id, kind, accountId, isActive, nextDueLocalDate, deletedAt",
+      investments: "id, assetType, currency, deletedAt",
+      netWorthItems: "id, kind, category, currency, deletedAt",
       outbox: "commandId, status, enqueuedAt",
       kv: "key",
     });
@@ -146,6 +175,8 @@ export class AgenticfOfflineDb extends Dexie {
         this.categories,
         this.transactions,
         this.recurringRules,
+        this.investments,
+        this.netWorthItems,
         this.outbox,
         this.kv,
       ],
@@ -155,6 +186,8 @@ export class AgenticfOfflineDb extends Dexie {
           this.categories.clear(),
           this.transactions.clear(),
           this.recurringRules.clear(),
+          this.investments.clear(),
+          this.netWorthItems.clear(),
           this.outbox.clear(),
           this.kv.clear(),
         ]);

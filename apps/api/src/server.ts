@@ -37,6 +37,11 @@ import {
   registerTransactionCommandHandlers,
   TransactionsService,
 } from "./transactions/service.js";
+import {
+  PostgresWealthRepository,
+  registerWealthCommandHandlers,
+  WealthService,
+} from "./wealth/service.js";
 
 async function start(): Promise<void> {
   loadEnvFilesIfPresent();
@@ -81,10 +86,14 @@ async function start(): Promise<void> {
     commandBus,
     advisoryLock: new PostgresRecurringAdvisoryLock(dbClient),
   });
+  const wealthService = new WealthService({
+    repository: new PostgresWealthRepository(dbClient),
+  });
   registerAccountCommandHandlers(commandBus, accountsService);
   registerCategoryCommandHandlers(commandBus, categoriesService);
   registerTransactionCommandHandlers(commandBus, transactionsService);
   registerRecurringCommandHandlers(commandBus, recurringService);
+  registerWealthCommandHandlers(commandBus, wealthService);
   const fxScheduler = startFxDailyScheduler({
     fxService,
     onError: captureExceptionSafe,
@@ -105,6 +114,7 @@ async function start(): Promise<void> {
     categoriesService,
     transactionsService,
     recurringService,
+    wealthService,
     secureCookies: env.NODE_ENV === "production",
     onError: captureExceptionSafe,
   });

@@ -50,6 +50,13 @@
       "when": 1795123677185,
       "tag": "0006_parched_millenium_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795153876597,
+      "tag": "0007_white_prism",
+      "breakpoints": true
     }
   ]
 }
