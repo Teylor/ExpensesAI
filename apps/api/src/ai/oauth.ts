@@ -95,13 +95,17 @@ export class ChatGptOAuthService {
     }
   }
 
-  async startAuthorization(userId?: string | null): Promise<{
+  async startAuthorization(
+    userId?: string | null,
+    redirectUriOverride?: string,
+  ): Promise<{
     authorizationUrl: string;
     state: string;
   }> {
     const state = randomBytes(32).toString("base64url");
     const codeVerifier = randomBytes(32).toString("base64url");
     const codeChallenge = sha256Base64Url(codeVerifier);
+    const effectiveRedirectUri = redirectUriOverride ?? this.redirectUri;
 
     const now = this.now();
     await this.repository.saveState({
@@ -114,7 +118,7 @@ export class ChatGptOAuthService {
     const url = new URL(this.authorizeUrl);
     url.searchParams.set("response_type", "code");
     url.searchParams.set("client_id", this.clientId);
-    url.searchParams.set("redirect_uri", this.redirectUri);
+    url.searchParams.set("redirect_uri", effectiveRedirectUri);
     url.searchParams.set(
       "scope",
       "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct",
@@ -133,6 +137,7 @@ export class ChatGptOAuthService {
   async completeAuthorization(input: {
     state: string;
     code: string;
+    redirectUri?: string;
   }): Promise<ChatGptTokenExchangeResult & { userId: string | null }> {
     const stateHash = sha256Hex(input.state);
     const stored = await this.repository.consumeState(stateHash);
@@ -141,12 +146,13 @@ export class ChatGptOAuthService {
     }
 
     const codeVerifier = this.vault.decrypt(stored.encryptedCodeVerifier);
+    const effectiveRedirectUri = input.redirectUri ?? this.redirectUri;
 
     if (this.exchangeCodeFn) {
       const exchanged = await this.exchangeCodeFn({
         code: input.code,
         codeVerifier,
-        redirectUri: this.redirectUri,
+        redirectUri: effectiveRedirectUri,
         clientId: this.clientId,
         tokenUrl: this.tokenUrl,
       });
@@ -160,7 +166,7 @@ export class ChatGptOAuthService {
       grant_type: "authorization_code",
       client_id: this.clientId,
       code: input.code,
-      redirect_uri: this.redirectUri,
+      redirect_uri: effectiveRedirectUri,
       code_verifier: codeVerifier,
     });
 
