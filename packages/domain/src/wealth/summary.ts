@@ -24,6 +24,7 @@ export interface InvestmentSummaryInput {
   readonly quantity: string | null;
   readonly purchasedAt?: string | null;
   readonly purchasePrice?: string | null;
+  readonly trackPrice?: boolean;
   readonly investedAmount: string;
   readonly currentValue: string;
   readonly currency: string;
@@ -56,6 +57,9 @@ export interface NetWorthSummaryInput {
   readonly kind: NetWorthKind;
   readonly category: string;
   readonly name: string;
+  readonly purchasedAt?: string | null;
+  readonly purchasePrice?: string | null;
+  readonly trackPrice?: boolean;
   readonly estimatedValue: string;
   readonly currency: string;
 }

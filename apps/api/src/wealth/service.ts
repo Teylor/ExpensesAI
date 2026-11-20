@@ -19,6 +19,7 @@ export interface StoredInvestment {
   readonly quantity: string | null;
   readonly purchasedAt: string | null;
   readonly purchasePrice: string | null;
+  readonly trackPrice: boolean;
   readonly investedAmount: string;
   readonly currentValue: string;
   readonly currency: string;
@@ -33,6 +34,9 @@ export interface StoredNetWorthItem {
   readonly kind: NetWorthKind;
   readonly category: string;
   readonly name: string;
+  readonly purchasedAt: string | null;
+  readonly purchasePrice: string | null;
+  readonly trackPrice: boolean;
   readonly estimatedValue: string;
   readonly currency: string;
   readonly deletedAt: Date | null;
@@ -115,6 +119,7 @@ export class WealthService {
       quantity?: string | null;
       purchasedAt?: string | null;
       purchasePrice?: string | null;
+      trackPrice?: boolean;
       investedAmount: string;
       currentValue: string;
       currency: string;
@@ -152,6 +157,10 @@ export class WealthService {
         input.purchasePrice !== undefined
           ? (input.purchasePrice?.trim() ?? null)
           : (previous?.purchasePrice ?? null),
+      trackPrice:
+        input.trackPrice !== undefined
+          ? input.trackPrice
+          : (previous?.trackPrice ?? false),
       investedAmount: investedMoney.amount,
       currentValue: currentMoney.amount,
       currency,
@@ -208,6 +217,9 @@ export class WealthService {
       kind: NetWorthKind;
       category: string;
       name: string;
+      purchasedAt?: string | null;
+      purchasePrice?: string | null;
+      trackPrice?: boolean;
       estimatedValue: string;
       currency: string;
     },
@@ -231,6 +243,18 @@ export class WealthService {
       kind: input.kind,
       category: input.category.trim(),
       name: input.name.trim(),
+      purchasedAt:
+        input.purchasedAt !== undefined
+          ? (input.purchasedAt?.trim() ?? null)
+          : (previous?.purchasedAt ?? null),
+      purchasePrice:
+        input.purchasePrice !== undefined
+          ? (input.purchasePrice?.trim() ?? null)
+          : (previous?.purchasePrice ?? null),
+      trackPrice:
+        input.trackPrice !== undefined
+          ? input.trackPrice
+          : (previous?.trackPrice ?? false),
       estimatedValue: valueMoney.amount,
       currency,
       deletedAt: null,
@@ -300,6 +324,9 @@ export function registerWealthCommandHandlers(
           ...(payload.purchasePrice !== undefined
             ? { purchasePrice: payload.purchasePrice }
             : {}),
+          ...(payload.trackPrice !== undefined
+            ? { trackPrice: payload.trackPrice }
+            : {}),
           investedAmount: payload.investedAmount,
           currentValue: payload.currentValue,
           currency: payload.currency,
@@ -332,6 +359,7 @@ export function registerWealthCommandHandlers(
         quantity: prev.quantity,
         purchasedAt: prev.purchasedAt,
         purchasePrice: prev.purchasePrice,
+        trackPrice: prev.trackPrice,
         investedAmount: prev.investedAmount,
         currentValue: prev.currentValue,
         currency: prev.currency,
@@ -367,6 +395,15 @@ export function registerWealthCommandHandlers(
           kind: payload.kind,
           category: payload.category,
           name: payload.name,
+          ...(payload.purchasedAt !== undefined
+            ? { purchasedAt: payload.purchasedAt }
+            : {}),
+          ...(payload.purchasePrice !== undefined
+            ? { purchasePrice: payload.purchasePrice }
+            : {}),
+          ...(payload.trackPrice !== undefined
+            ? { trackPrice: payload.trackPrice }
+            : {}),
           estimatedValue: payload.estimatedValue,
           currency: payload.currency,
         },
@@ -395,6 +432,9 @@ export function registerWealthCommandHandlers(
         kind: prev.kind,
         category: prev.category,
         name: prev.name,
+        purchasedAt: prev.purchasedAt,
+        purchasePrice: prev.purchasePrice,
+        trackPrice: prev.trackPrice,
         estimatedValue: prev.estimatedValue,
         currency: prev.currency,
       });
@@ -478,6 +518,7 @@ export class PostgresWealthRepository implements WealthRepository {
         quantity: quantityDb,
         purchasedAt: item.purchasedAt,
         purchasePrice: purchasePriceDb,
+        trackPrice: item.trackPrice,
         investedAmount: investedDb,
         currentValue: currentDb,
         currency: item.currency,
@@ -494,6 +535,7 @@ export class PostgresWealthRepository implements WealthRepository {
           quantity: quantityDb,
           purchasedAt: item.purchasedAt,
           purchasePrice: purchasePriceDb,
+          trackPrice: item.trackPrice,
           investedAmount: investedDb,
           currentValue: currentDb,
           currency: item.currency,
@@ -551,6 +593,9 @@ export class PostgresWealthRepository implements WealthRepository {
     const valueDb = toDbNumericString(
       createMoney(item.estimatedValue, item.currency),
     );
+    const purchasePriceDb = item.purchasePrice
+      ? toDbNumericString(createMoney(item.purchasePrice, item.currency))
+      : null;
     await this.dbClient.db
       .insert(netWorthItems)
       .values({
@@ -559,6 +604,9 @@ export class PostgresWealthRepository implements WealthRepository {
         kind: item.kind,
         category: item.category,
         name: item.name,
+        purchasedAt: item.purchasedAt,
+        purchasePrice: purchasePriceDb,
+        trackPrice: item.trackPrice,
         estimatedValue: valueDb,
         currency: item.currency,
         deletedAt: item.deletedAt,
@@ -571,6 +619,9 @@ export class PostgresWealthRepository implements WealthRepository {
           kind: item.kind,
           category: item.category,
           name: item.name,
+          purchasedAt: item.purchasedAt,
+          purchasePrice: purchasePriceDb,
+          trackPrice: item.trackPrice,
           estimatedValue: valueDb,
           currency: item.currency,
           deletedAt: item.deletedAt,
@@ -606,6 +657,7 @@ export class PostgresWealthRepository implements WealthRepository {
       purchasePrice: row.purchasePrice
         ? normalizeStoredDecimal(row.purchasePrice)
         : null,
+      trackPrice: row.trackPrice,
       investedAmount: normalizeStoredDecimal(row.investedAmount),
       currentValue: normalizeStoredDecimal(row.currentValue),
       currency: row.currency,
@@ -624,6 +676,11 @@ export class PostgresWealthRepository implements WealthRepository {
       kind: row.kind as NetWorthKind,
       category: row.category,
       name: row.name,
+      purchasedAt: row.purchasedAt,
+      purchasePrice: row.purchasePrice
+        ? normalizeStoredDecimal(row.purchasePrice)
+        : null,
+      trackPrice: row.trackPrice,
       estimatedValue: normalizeStoredDecimal(row.estimatedValue),
       currency: row.currency,
       deletedAt: row.deletedAt,

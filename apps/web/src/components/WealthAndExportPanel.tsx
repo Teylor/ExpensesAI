@@ -80,6 +80,8 @@ export function WealthAndExportPanel({
   const [invType, setInvType] = useState("Crypto");
   const [invName, setInvName] = useState("");
   const [invSymbol, setInvSymbol] = useState("");
+  const [invPurchasedAt, setInvPurchasedAt] = useState("");
+  const [invTrackPrice, setInvTrackPrice] = useState(false);
   const [invInvested, setInvInvested] = useState("");
   const [invCurrent, setInvCurrent] = useState("");
   const [invCurrency, setInvCurrency] = useState(preferences.baseCurrency);
@@ -88,6 +90,8 @@ export function WealthAndExportPanel({
   const [nwKind, setNwKind] = useState<NetWorthKind>("asset");
   const [nwCategory, setNwCategory] = useState("Inmuebles");
   const [nwName, setNwName] = useState("");
+  const [nwPurchasedAt, setNwPurchasedAt] = useState("");
+  const [nwTrackPrice, setNwTrackPrice] = useState(false);
   const [nwValue, setNwValue] = useState("");
   const [nwCurrency, setNwCurrency] = useState(preferences.baseCurrency);
 
@@ -127,6 +131,8 @@ export function WealthAndExportPanel({
         assetType: invType.trim() || "Crypto",
         name: invName.trim(),
         ...(invSymbol.trim() ? { symbol: invSymbol.trim().toUpperCase() } : {}),
+        ...(invPurchasedAt ? { purchasedAt: invPurchasedAt } : {}),
+        trackPrice: invTrackPrice,
         investedAmount: invInvested.trim(),
         currentValue: invCurrent.trim(),
         currency: invCurrency.trim().toUpperCase() || preferences.baseCurrency,
@@ -134,6 +140,8 @@ export function WealthAndExportPanel({
     });
     setInvName("");
     setInvSymbol("");
+    setInvPurchasedAt("");
+    setInvTrackPrice(false);
     setInvInvested("");
     setInvCurrent("");
   };
@@ -151,11 +159,15 @@ export function WealthAndExportPanel({
         kind: nwKind,
         category: nwCategory.trim() || "Inmuebles",
         name: nwName.trim(),
+        ...(nwPurchasedAt ? { purchasedAt: nwPurchasedAt } : {}),
+        trackPrice: nwTrackPrice,
         estimatedValue: nwValue.trim(),
         currency: nwCurrency.trim().toUpperCase() || preferences.baseCurrency,
       },
     });
     setNwName("");
+    setNwPurchasedAt("");
+    setNwTrackPrice(false);
     setNwValue("");
   };
 
@@ -302,9 +314,47 @@ export function WealthAndExportPanel({
                     </p>
                     <p className="text-xs text-zinc-400">
                       {item.assetType} · Inv: {item.formattedInvestedAmount}
+                      {item.purchasedAt ? ` · Compra: ${item.purchasedAt}` : ""}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void onDispatchCommand({
+                          commandId: generateUuid(),
+                          actor: "manual",
+                          issuedAtUtc: new Date().toISOString(),
+                          type: "investment.upsert",
+                          payload: {
+                            investmentId: item.id,
+                            assetType: item.assetType,
+                            name: item.name,
+                            ...(item.symbol ? { symbol: item.symbol } : {}),
+                            ...(item.quantity
+                              ? { quantity: item.quantity }
+                              : {}),
+                            ...(item.purchasedAt
+                              ? { purchasedAt: item.purchasedAt }
+                              : {}),
+                            ...(item.purchasePrice
+                              ? { purchasePrice: item.purchasePrice }
+                              : {}),
+                            trackPrice: !item.trackPrice,
+                            investedAmount: item.investedAmount,
+                            currentValue: item.currentValue,
+                            currency: item.currency,
+                          },
+                        })
+                      }
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ${
+                        item.trackPrice
+                          ? "bg-emerald-500/15 text-emerald-300 ring-emerald-500/40"
+                          : "bg-zinc-900 text-zinc-500 ring-zinc-800 hover:text-zinc-300"
+                      }`}
+                    >
+                      {item.trackPrice ? "Tracking ON" : "Tracking OFF"}
+                    </button>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-sky-300">
                         {item.formattedCurrentValue}
@@ -394,6 +444,21 @@ export function WealthAndExportPanel({
               onChange={(e) => setInvCurrent(e.target.value)}
               className="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
             />
+            <input
+              type="date"
+              aria-label="Fecha de compra inversión"
+              value={invPurchasedAt}
+              onChange={(e) => setInvPurchasedAt(e.target.value)}
+              className="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
+            />
+            <label className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-300">
+              <input
+                type="checkbox"
+                checked={invTrackPrice}
+                onChange={(e) => setInvTrackPrice(e.target.checked)}
+              />
+              <span>Seguimiento</span>
+            </label>
             <div className="flex gap-1.5">
               <input
                 type="text"
@@ -440,9 +505,45 @@ export function WealthAndExportPanel({
                     <p className="text-xs text-zinc-400">
                       {item.kind === "asset" ? "Activo" : "Pasivo"} ·{" "}
                       {item.category}
+                      {item.purchasedAt ? ` · Compra: ${item.purchasedAt}` : ""}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
+                    {item.kind === "asset" && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void onDispatchCommand({
+                            commandId: generateUuid(),
+                            actor: "manual",
+                            issuedAtUtc: new Date().toISOString(),
+                            type: "networth.upsert",
+                            payload: {
+                              itemId: item.id,
+                              kind: item.kind,
+                              category: item.category,
+                              name: item.name,
+                              ...(item.purchasedAt
+                                ? { purchasedAt: item.purchasedAt }
+                                : {}),
+                              ...(item.purchasePrice
+                                ? { purchasePrice: item.purchasePrice }
+                                : {}),
+                              trackPrice: !item.trackPrice,
+                              estimatedValue: item.estimatedValue,
+                              currency: item.currency,
+                            },
+                          })
+                        }
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ${
+                          item.trackPrice
+                            ? "bg-emerald-500/15 text-emerald-300 ring-emerald-500/40"
+                            : "bg-zinc-900 text-zinc-500 ring-zinc-800 hover:text-zinc-300"
+                        }`}
+                      >
+                        {item.trackPrice ? "Tracking ON" : "Tracking OFF"}
+                      </button>
+                    )}
                     <span
                       className={`text-sm font-semibold ${
                         item.kind === "asset"
@@ -520,6 +621,21 @@ export function WealthAndExportPanel({
               onChange={(e) => setNwValue(e.target.value)}
               className="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
             />
+            <input
+              type="date"
+              aria-label="Fecha de compra patrimonio"
+              value={nwPurchasedAt}
+              onChange={(e) => setNwPurchasedAt(e.target.value)}
+              className="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs"
+            />
+            <label className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-300">
+              <input
+                type="checkbox"
+                checked={nwTrackPrice}
+                onChange={(e) => setNwTrackPrice(e.target.checked)}
+              />
+              <span>Seguimiento</span>
+            </label>
             <div className="flex gap-1.5">
               <input
                 type="text"

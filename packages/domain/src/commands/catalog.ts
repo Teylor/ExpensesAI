@@ -124,18 +124,21 @@ const recurringDeletePayloadSchema = z.object({
   ruleId: z.uuid(),
 });
 
+const localDateOptionalSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .optional();
+
 const investmentUpsertPayloadSchema = z.object({
   investmentId: z.uuid().optional(),
   assetType: editableCategoryNameSchema,
   name: z.string().trim().min(1).max(120),
   symbol: z.string().trim().min(1).max(20).optional(),
   quantity: positiveDecimalStringSchema.optional(),
-  /** V2-03 hook: fecha de compra (YYYY-MM-DD) y precio unitario de adquisición */
-  purchasedAt: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
+  /** V2-03 hooks: fecha de compra, precio de compra y toggle individual de seguimiento */
+  purchasedAt: localDateOptionalSchema,
   purchasePrice: positiveDecimalStringSchema.optional(),
+  trackPrice: z.boolean().optional(),
   investedAmount: decimalStringSchema,
   currentValue: decimalStringSchema,
   currency: currencyCodeSchema,
@@ -150,6 +153,10 @@ const netWorthUpsertPayloadSchema = z.object({
   kind: z.enum(NET_WORTH_KINDS),
   category: editableCategoryNameSchema,
   name: z.string().trim().min(1).max(120),
+  /** V2-03 hooks: fecha de compra, precio de compra y toggle individual de seguimiento (ej. carta Magic concreta) */
+  purchasedAt: localDateOptionalSchema,
+  purchasePrice: positiveDecimalStringSchema.optional(),
+  trackPrice: z.boolean().optional(),
   estimatedValue: positiveDecimalStringSchema,
   currency: currencyCodeSchema,
 });

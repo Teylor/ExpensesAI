@@ -78,6 +78,7 @@ export interface LocalInvestment {
   quantity: string | null;
   purchasedAt?: string | null;
   purchasePrice?: string | null;
+  trackPrice?: boolean;
   investedAmount: string;
   currentValue: string;
   currency: string;
@@ -90,6 +91,9 @@ export interface LocalNetWorthItem {
   kind: NetWorthKind;
   category: string;
   name: string;
+  purchasedAt?: string | null;
+  purchasePrice?: string | null;
+  trackPrice?: boolean;
   estimatedValue: string;
   currency: string;
   deletedAt: string | null;

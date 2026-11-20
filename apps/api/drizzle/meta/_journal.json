@@ -64,6 +64,13 @@
       "when": 1795154547733,
       "tag": "0008_striped_johnny_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795154991684,
+      "tag": "0009_bizarre_earthquake",
+      "breakpoints": true
     }
   ]
 }

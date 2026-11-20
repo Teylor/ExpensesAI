@@ -114,12 +114,18 @@ describe("WealthService + CommandBus handlers (Investments & Net Worth + Undo)",
         name: "Bitcoin",
         symbol: "BTC",
         quantity: "0.5",
+        purchasedAt: "2026-01-15",
+        purchasePrice: "30000",
+        trackPrice: true,
         investedAmount: "15000",
         currentValue: "22000",
         currency: "EUR",
       },
     });
-    expect(await wealthService.listInvestments(USER_A)).toHaveLength(1);
+    const invsA = await wealthService.listInvestments(USER_A);
+    expect(invsA).toHaveLength(1);
+    expect(invsA[0]?.trackPrice).toBe(true);
+    expect(invsA[0]?.purchasedAt).toBe("2026-01-15");
 
     // Update currentValue and Undo -> reverts to 22000
     const updateInvCmd = "73000000-0000-4000-8000-000000000002";

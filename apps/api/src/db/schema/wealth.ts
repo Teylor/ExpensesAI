@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   numeric,
   pgTable,
@@ -18,11 +19,12 @@ export const investments = pgTable(
     /** User-editable category name (e.g., Crypto, Acciones, ETF, Fondos, custom) */
     assetType: text("asset_type").notNull(),
     name: text("name").notNull(),
-    /** V2-03 hooks for live market price feeds & purchase lot tracking */
+    /** V2-03 hooks for per-asset opt-in price tracking & purchase date/price */
     symbol: text("symbol"),
     quantity: numeric("quantity", { precision: 20, scale: 8 }),
     purchasedAt: text("purchased_at"),
     purchasePrice: numeric("purchase_price", { precision: 20, scale: 8 }),
+    trackPrice: boolean("track_price").notNull().default(false),
     investedAmount: numeric("invested_amount", {
       precision: 20,
       scale: 8,
@@ -55,6 +57,10 @@ export const netWorthItems = pgTable(
     /** User-editable category name (e.g., Inmuebles, Vehículos, Cartas, Hipoteca, custom) */
     category: text("category").notNull(),
     name: text("name").notNull(),
+    /** V2-03 hooks for per-asset opt-in price tracking (e.g., specific Magic card) & purchase date/price */
+    purchasedAt: text("purchased_at"),
+    purchasePrice: numeric("purchase_price", { precision: 20, scale: 8 }),
+    trackPrice: boolean("track_price").notNull().default(false),
     estimatedValue: numeric("estimated_value", {
       precision: 20,
       scale: 8,
