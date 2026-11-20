@@ -19,6 +19,7 @@ services:
       - internal
 
   api:
+    image: ghcr.io/teylor/agenticf-api:latest
     build:
       context: ..
       dockerfile: docker/api.Dockerfile
@@ -47,6 +48,7 @@ services:
       - internal
 
   web:
+    image: ghcr.io/teylor/agenticf-web:latest
     build:
       context: ..
       dockerfile: docker/web.Dockerfile
