@@ -56,6 +56,17 @@ function sha256Hex(input: string): string {
   return createHash("sha256").update(input, "utf8").digest("hex");
 }
 
+function decodeJwtPayload(jwtToken: string): Record<string, unknown> | null {
+  const parts = jwtToken.split(".");
+  if (parts.length < 2 || !parts[1]) return null;
+  try {
+    const json = Buffer.from(parts[1], "base64url").toString("utf8");
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 export class ChatGptOAuthService {
   private readonly repository: AiOauthStateRepository;
   private readonly vault: SecretVault;
@@ -70,10 +81,11 @@ export class ChatGptOAuthService {
   constructor(options: ChatGptOAuthServiceOptions) {
     this.repository = options.repository;
     this.vault = options.vault;
-    this.clientId = options.clientId ?? "agenticf-chatgpt-plan-sharing";
+    this.clientId = options.clientId ?? "dynamic_agent_client";
     this.authorizeUrl =
-      options.authorizeUrl ?? "https://auth.openai.com/oauth/authorize";
-    this.tokenUrl = options.tokenUrl ?? "https://auth.openai.com/oauth/token";
+      options.authorizeUrl ?? "https://auth.openai.com/api/accounts/authorize";
+    this.tokenUrl =
+      options.tokenUrl ?? "https://auth.openai.com/api/accounts/oauth/token";
     this.redirectUri =
       options.redirectUri ?? "http://localhost:5173/oauth/chatgpt/callback";
     this.stateTtlMs = options.stateTtlMs ?? 10 * 60 * 1000;
@@ -103,7 +115,11 @@ export class ChatGptOAuthService {
     url.searchParams.set("response_type", "code");
     url.searchParams.set("client_id", this.clientId);
     url.searchParams.set("redirect_uri", this.redirectUri);
-    url.searchParams.set("scope", "openid profile email model.request");
+    url.searchParams.set(
+      "scope",
+      "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct",
+    );
+    url.searchParams.set("resource", "https://api.openai.com/v1");
     url.searchParams.set("state", state);
     url.searchParams.set("code_challenge", codeChallenge);
     url.searchParams.set("code_challenge_method", "S256");
@@ -140,10 +156,50 @@ export class ChatGptOAuthService {
       };
     }
 
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: this.clientId,
+      code: input.code,
+      redirect_uri: this.redirectUri,
+      code_verifier: codeVerifier,
+    });
+
+    const response = await fetch(this.tokenUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => "");
+      throw new Error(
+        `OpenAI OAuth token exchange failed (${response.status}): ${errText.slice(0, 200)}`,
+      );
+    }
+
+    const tokenPayload = (await response.json()) as {
+      access_token?: string;
+      id_token?: string;
+    };
+
+    if (!tokenPayload.access_token) {
+      throw new Error("OpenAI OAuth response missing access_token");
+    }
+
+    const claims = tokenPayload.id_token
+      ? decodeJwtPayload(tokenPayload.id_token)
+      : null;
+    const email =
+      typeof claims?.email === "string"
+        ? claims.email
+        : "chatgpt-user@openai.local";
+    const displayName =
+      typeof claims?.name === "string" ? claims.name : "ChatGPT Plan Sharing";
+
     return {
-      accessToken: `chatgpt_oauth_${input.code}`,
-      email: "chatgpt-user@agenticf.local",
-      displayName: "ChatGPT Plan Sharing",
+      accessToken: tokenPayload.access_token,
+      email,
+      displayName,
       model: "gpt-4o-mini",
       userId: stored.userId,
     };

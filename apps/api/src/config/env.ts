@@ -73,6 +73,10 @@ const envSchema = z
       .string()
       .min(16)
       .default("agenticf-dev-aes-256-gcm-master-secret"),
+    CHATGPT_OAUTH_CLIENT_ID: z.string().min(1).default("dynamic_agent_client"),
+    CHATGPT_OAUTH_REDIRECT_URI: z
+      .url()
+      .default("http://localhost:5173/oauth/chatgpt/callback"),
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === "production" && data.CORS_ORIGIN.trim() === "*") {

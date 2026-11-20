@@ -408,6 +408,27 @@ export async function startChatGptOAuthFlow(
   return (await res.json()) as { authorizationUrl: string; state: string };
 }
 
+export async function completeChatGptOAuthCallback(
+  state: string,
+  code: string,
+  baseUrl = "",
+): Promise<{
+  user?: PublicUserDto;
+  preferences?: UserPreferences;
+}> {
+  const res = await fetch(`${baseUrl}/api/v1/ai/oauth/chatgpt/callback`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ state, code }),
+  });
+  if (!res.ok) throw new Error(await parseErrorMessage(res));
+  return (await res.json()) as {
+    user?: PublicUserDto;
+    preferences?: UserPreferences;
+  };
+}
+
 export async function sendAgentChatRemote(
   message: string,
   baseUrl = "",

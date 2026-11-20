@@ -103,6 +103,8 @@ async function start(): Promise<void> {
   const chatGptOAuthService = new ChatGptOAuthService({
     repository: new PostgresAiOauthStateRepository(dbClient),
     vault: secretVault,
+    clientId: env.CHATGPT_OAUTH_CLIENT_ID,
+    redirectUri: env.CHATGPT_OAUTH_REDIRECT_URI,
   });
   const agentOrchestrator = new AgentOrchestrator({
     connectionsRepository: aiConnectionsRepository,

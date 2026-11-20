@@ -191,6 +191,12 @@ function createTestWiring() {
   const chatGptOAuthService = new ChatGptOAuthService({
     repository: oauthRepo,
     vault: secretVault,
+    exchangeCodeFn: async ({ code }) => ({
+      accessToken: `chatgpt_oauth_${code}`,
+      email: "chatgpt-user@agenticf.local",
+      displayName: "ChatGPT Plan Sharing",
+      model: "gpt-4o-mini",
+    }),
   });
   const agentOrchestrator = new AgentOrchestrator({
     connectionsRepository: aiConnectionsRepository,

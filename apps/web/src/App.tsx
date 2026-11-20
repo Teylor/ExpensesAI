@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import {
+  completeChatGptOAuthCallback,
   createHttpOutboxTransport,
   fetchCurrentUser,
   hydrateOfflineDbFromServer,
@@ -192,6 +193,31 @@ export function App() {
   useEffect(() => {
     void (async () => {
       await reloadLocalState();
+
+      const params = new URLSearchParams(window.location.search);
+      const oauthCode = params.get("code");
+      const oauthState = params.get("state");
+      if (oauthCode && oauthState) {
+        try {
+          const cb = await completeChatGptOAuthCallback(oauthState, oauthCode);
+          window.history.replaceState({}, "", "/");
+          if (cb.user && cb.preferences) {
+            setUser(cb.user);
+            await offlineDb.savePreferences(cb.preferences);
+            await hydrateOfflineDbFromServer(offlineDb);
+            await reloadLocalState();
+            return;
+          }
+        } catch (err) {
+          setAuthError(
+            err instanceof Error
+              ? err.message
+              : "Error completando Sign in with ChatGPT",
+          );
+          window.history.replaceState({}, "", "/");
+        }
+      }
+
       const me = await fetchCurrentUser();
       if (me) {
         setUser(me.user);
