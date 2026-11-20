@@ -94,7 +94,7 @@ services:
     container_name: agenticf-web-dev
     restart: unless-stopped
     working_dir: /app
-    command: pnpm --filter @agenticf/web dev -- --host 0.0.0.0 --port 5173
+    command: pnpm --filter @agenticf/web dev
     ports:
       - "5173:5173"
     environment:
