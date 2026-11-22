@@ -95,21 +95,42 @@ jobs:
           for attempt in 1 2 3; do
             echo "SSH deploy attempt ${attempt} to ${NAS_HOST}:${PORT}..."
             if ssh -p "$PORT" -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o BatchMode=yes "${NAS_USER}@${NAS_HOST}" "DEPLOY_DIR='${NAS_DEPLOY_DIR:-/volume1/docker/agenticf}' GHCR_USER='${GHCR_USER}' GHCR_TOKEN='${GHCR_TOKEN}' bash -s" <<'EOF'
-              set -e
+              set -euo pipefail
               cd "$DEPLOY_DIR"
               if [ -d .git ]; then
-                git pull origin main
+                git pull origin main < /dev/null
               fi
               ENV_FLAG=""
               if [ -f .env ]; then
                 ENV_FLAG="--env-file .env"
               fi
               echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-              docker compose $ENV_FLAG -f docker/compose.nas.yml pull
-              docker compose $ENV_FLAG -f docker/compose.nas.yml up -d postgres
-              docker compose $ENV_FLAG -f docker/compose.nas.yml run --rm api node apps/api/dist/db/migrate.js
-              docker compose $ENV_FLAG -f docker/compose.nas.yml up -d --remove-orphans
-              docker image prune -f
+              docker compose $ENV_FLAG -f docker/compose.nas.yml pull < /dev/null
+              docker compose $ENV_FLAG -f docker/compose.nas.yml up -d postgres < /dev/null
+              docker compose $ENV_FLAG -f docker/compose.nas.yml run -T --rm api node apps/api/dist/db/migrate.js < /dev/null
+              docker compose $ENV_FLAG -f docker/compose.nas.yml up -d --remove-orphans < /dev/null
+              docker compose $ENV_FLAG -f docker/compose.nas.yml ps < /dev/null
+              if command -v curl >/dev/null 2>&1; then
+                HTTP_PORT=""
+                if [ -f .env ]; then
+                  HTTP_PORT=$(awk -F= '/^APP_HTTP_PORT=/{val=$2} END{gsub(/[\r"]/, "", val); print val}' .env)
+                fi
+                HTTP_PORT="${HTTP_PORT:-8080}"
+                READY_OK=0
+                for _ in $(seq 1 15); do
+                  if curl -fsS "http://127.0.0.1:${HTTP_PORT}/ready" >/dev/null < /dev/null; then
+                    echo "Post-deploy /ready check passed on port ${HTTP_PORT}."
+                    READY_OK=1
+                    break
+                  fi
+                  sleep 2
+                done
+                if [ "$READY_OK" -ne 1 ]; then
+                  echo "ERROR: /ready check failed on port ${HTTP_PORT} after deploy." >&2
+                  exit 1
+                fi
+              fi
+              docker image prune -f < /dev/null
           EOF
             then
               echo "Deploy succeeded!"
