@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+:root {
+  --bg-canvas: #09090b;
+  --bg-surface: #121216;
+  --bg-surface-strong: #18181b;
+  --bg-input: #09090b;
+  --border-subtle: #27272a;
+  --border-strong: #3f3f46;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --accent-primary: #10b981;
+  --accent-primary-hover: #34d399;
+  --accent-on-primary: #09090b;
+  --status-income: #34d399;
+  --status-expense: #fb7185;
+  --status-transfer: #7dd3fc;
+  --status-warning: #fcd34d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
+  }
+}
