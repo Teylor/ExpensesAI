@@ -86,4 +86,30 @@ describe("i18n engine (ES / EN typed catalogs and interpolation)", () => {
       "Delete connection OpenAI",
     );
   });
+
+  it("translates 5-tab navigation, shell status, and manage UX labels in ES and EN", () => {
+    expect(t("es", "nav.overview")).toBe("Resumen");
+    expect(t("en", "nav.overview")).toBe("Overview");
+    expect(t("es", "nav.activity")).toBe("Movimientos");
+    expect(t("en", "nav.activity")).toBe("Activity");
+    expect(t("es", "nav.accounts")).toBe("Cuentas");
+    expect(t("en", "nav.accounts")).toBe("Accounts");
+    expect(t("es", "nav.wealth")).toBe("Patrimonio");
+    expect(t("en", "nav.wealth")).toBe("Wealth");
+    expect(t("es", "nav.manage")).toBe("Gestión");
+    expect(t("en", "nav.manage")).toBe("Manage");
+
+    expect(t("es", "shell.pendingCount", { count: 3 })).toBe("3 pendientes");
+    expect(t("en", "shell.pendingCount", { count: 3 })).toBe("3 pending");
+    expect(
+      t("es", "manage.exportsDownloaded", {
+        filename: "agenticf-accounts.csv",
+      }),
+    ).toBe("Archivo agenticf-accounts.csv descargado.");
+    expect(
+      t("en", "manage.exportsDownloaded", {
+        filename: "agenticf-accounts.csv",
+      }),
+    ).toBe("Downloaded agenticf-accounts.csv.");
+  });
 });

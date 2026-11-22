@@ -69,6 +69,92 @@ export const messagesEn: MessageCatalog = {
   "agent.ui.byokError": "Error saving key",
   "agent.ui.activeConnections": "Active connections",
   "agent.ui.deleteConnectionAria": "Delete connection {{label}}",
+  "agent.ui.thinking": "Thinking...",
+
+  "nav.overview": "Overview",
+  "nav.activity": "Activity",
+  "nav.accounts": "Accounts",
+  "nav.wealth": "Wealth",
+  "nav.manage": "Manage",
+  "nav.skipToContent": "Skip to main content",
+  "nav.primaryAria": "Primary navigation",
+  "nav.mobileAria": "Mobile navigation",
+  "nav.subtabsAria": "Sections",
+
+  "shell.online": "Online",
+  "shell.offline": "Offline",
+  "shell.sync": "Sync",
+  "shell.syncNow": "Sync now",
+  "shell.syncing": "Syncing...",
+  "shell.synced": "Synced",
+  "shell.pendingCount": "{{count}} pending",
+  "shell.syncError":
+    "Could not sync right now. Your changes remain safely stored locally.",
+  "shell.retry": "Retry",
+  "shell.undo": "Undo",
+  "shell.dismissNotice": "Dismiss notice",
+  "shell.logout": "Log out",
+  "shell.localMode": "Local Offline Mode",
+  "shell.loading": "Loading your financial workspace...",
+  "shell.errorBoundaryTitle": "Something went wrong in this tab",
+  "shell.errorBoundaryDesc":
+    "Your local data is still safe. You can retry or switch tabs.",
+
+  "overview.totalBalance": "Total Balance",
+  "overview.statusTitle": "Status & Sync",
+  "overview.accountsSynced": "{{count}} accounts · Synced",
+  "overview.onboardingTitle": "Start by creating your first account",
+  "overview.onboardingDesc":
+    "Add a bank, cash, or savings account to start tracking transactions or using the AI Agent.",
+  "overview.createFirstAccount": "Create first account",
+  "overview.quickRecord": "Record transaction",
+  "overview.viewAccounts": "View accounts",
+  "overview.chartEmpty": "No income or expenses in this period.",
+  "overview.chartAria":
+    "Chart of period income ({{income}}) and expenses ({{expense}})",
+
+  "activity.subtab.transactions": "Transactions",
+  "activity.subtab.recurring": "Recurring",
+  "activity.composerToggle": "Record transaction",
+  "activity.noAccountsNotice":
+    "Create at least one account first to record transactions or recurring rules.",
+  "activity.goToAccounts": "Go to Accounts",
+  "activity.accountLabel": "Account",
+  "activity.validationMissingAccount": "Select a valid account before saving.",
+  "activity.validationMissingDestination":
+    "Select a destination account different from the source account.",
+  "activity.validationMissingAmount": "Enter a valid amount greater than 0.",
+  "activity.validationMissingRecurring":
+    "Fill in account, description, and amount to create the recurring rule.",
+
+  "accounts.portfolioMix": "Account Portfolio",
+  "accounts.countSummary": "{{count}} active accounts",
+  "accounts.addTitle": "New Account",
+  "accounts.addSubmit": "Add account",
+  "accounts.validationMissingName": "Enter a name for the account.",
+
+  "wealth.subtab.investments": "Investments",
+  "wealth.subtab.networth": "Assets & Debts",
+  "wealth.validationInvestment":
+    "Fill in name, invested amount, and current value.",
+  "wealth.validationNetWorth": "Fill in name and estimated value.",
+
+  "manage.categoriesTitle": "Editable Categories",
+  "manage.categoriesScope.expense": "Expenses",
+  "manage.categoriesScope.income": "Income",
+  "manage.categoriesScope.investment": "Investments",
+  "manage.categoriesScope.networth": "Net Worth",
+  "manage.categoriesEmpty": "No categories in this scope yet.",
+  "manage.exportsTitle": "CSV Exports",
+  "manage.exportsDesc": "Download your local data as CSV files at any time.",
+  "manage.exportsCount": "{{count}} records",
+  "manage.exportsDownloaded": "Downloaded {{filename}}.",
+  "manage.syncTitle": "Sync & Outbox Queue",
+  "manage.syncDesc":
+    "Mutations are saved locally in IndexedDB first and sync automatically when online.",
+  "manage.prefsTitle": "Preferences & Session",
+  "manage.languageLabel": "Interface language",
+  "manage.sessionLabel": "Active session",
 
   "command.undo.success": "Change undone successfully.",
   "sync.offlineManualOnly":

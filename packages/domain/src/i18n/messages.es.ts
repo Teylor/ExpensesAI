@@ -69,6 +69,95 @@ export const messagesEs = {
   "agent.ui.byokError": "Error guardando Key",
   "agent.ui.activeConnections": "Conexiones activas",
   "agent.ui.deleteConnectionAria": "Eliminar conexión {{label}}",
+  "agent.ui.thinking": "Pensando...",
+
+  "nav.overview": "Resumen",
+  "nav.activity": "Movimientos",
+  "nav.accounts": "Cuentas",
+  "nav.wealth": "Patrimonio",
+  "nav.manage": "Gestión",
+  "nav.skipToContent": "Saltar al contenido principal",
+  "nav.primaryAria": "Navegación principal",
+  "nav.mobileAria": "Navegación móvil",
+  "nav.subtabsAria": "Secciones",
+
+  "shell.online": "Online",
+  "shell.offline": "Sin conexión",
+  "shell.sync": "Sincronizar",
+  "shell.syncNow": "Sincronizar ahora",
+  "shell.syncing": "Sincronizando...",
+  "shell.synced": "Sincronizado",
+  "shell.pendingCount": "{{count}} pendientes",
+  "shell.syncError":
+    "No se pudo sincronizar ahora. Tus cambios siguen guardados en local.",
+  "shell.retry": "Reintentar",
+  "shell.undo": "Deshacer",
+  "shell.dismissNotice": "Cerrar aviso",
+  "shell.logout": "Salir",
+  "shell.localMode": "Modo Offline Local",
+  "shell.loading": "Cargando tu espacio financiero...",
+  "shell.errorBoundaryTitle": "Algo salió mal en esta pestaña",
+  "shell.errorBoundaryDesc":
+    "Tus datos locales siguen seguros. Puedes reintentar o cambiar de pestaña.",
+
+  "overview.totalBalance": "Saldo Total",
+  "overview.statusTitle": "Estado y Sincronización",
+  "overview.accountsSynced": "{{count}} cuentas · Sincronizado",
+  "overview.onboardingTitle": "Empieza creando tu primera cuenta",
+  "overview.onboardingDesc":
+    "Añade una cuenta bancaria, efectivo o ahorro para empezar a registrar movimientos o usar el Agente IA.",
+  "overview.createFirstAccount": "Crear primera cuenta",
+  "overview.quickRecord": "Registrar movimiento",
+  "overview.viewAccounts": "Ver cuentas",
+  "overview.chartEmpty": "Sin ingresos ni gastos en este periodo.",
+  "overview.chartAria":
+    "Gráfico de ingresos ({{income}}) y gastos ({{expense}}) del periodo",
+
+  "activity.subtab.transactions": "Movimientos",
+  "activity.subtab.recurring": "Recurrentes",
+  "activity.composerToggle": "Registrar movimiento",
+  "activity.noAccountsNotice":
+    "Crea primero al menos una cuenta para registrar movimientos o reglas recurrentes.",
+  "activity.goToAccounts": "Ir a Cuentas",
+  "activity.accountLabel": "Cuenta",
+  "activity.validationMissingAccount":
+    "Selecciona una cuenta válida antes de guardar.",
+  "activity.validationMissingDestination":
+    "Selecciona una cuenta de destino diferente a la cuenta origen.",
+  "activity.validationMissingAmount":
+    "Introduce un importe válido mayor que 0.",
+  "activity.validationMissingRecurring":
+    "Completa cuenta, concepto e importe para crear la regla recurrente.",
+
+  "accounts.portfolioMix": "Cartera de Cuentas",
+  "accounts.countSummary": "{{count}} cuentas activas",
+  "accounts.addTitle": "Nueva Cuenta",
+  "accounts.addSubmit": "Añadir cuenta",
+  "accounts.validationMissingName": "Introduce un nombre para la cuenta.",
+
+  "wealth.subtab.investments": "Inversiones",
+  "wealth.subtab.networth": "Activos y Deudas",
+  "wealth.validationInvestment":
+    "Completa nombre, importe invertido y valor actual.",
+  "wealth.validationNetWorth": "Completa nombre y valor estimado.",
+
+  "manage.categoriesTitle": "Categorías Editables",
+  "manage.categoriesScope.expense": "Gastos",
+  "manage.categoriesScope.income": "Ingresos",
+  "manage.categoriesScope.investment": "Inversiones",
+  "manage.categoriesScope.networth": "Patrimonio",
+  "manage.categoriesEmpty": "No hay categorías en este ámbito todavía.",
+  "manage.exportsTitle": "Exportación CSV",
+  "manage.exportsDesc":
+    "Descarga tus datos locales en formato CSV en cualquier momento.",
+  "manage.exportsCount": "{{count}} registros",
+  "manage.exportsDownloaded": "Archivo {{filename}} descargado.",
+  "manage.syncTitle": "Sincronización y Cola Outbox",
+  "manage.syncDesc":
+    "Tus mutaciones se guardan primero en IndexedDB y se sincronizan automáticamente al reconectar.",
+  "manage.prefsTitle": "Preferencias y Sesión",
+  "manage.languageLabel": "Idioma de la interfaz",
+  "manage.sessionLabel": "Sesión activa",
 
   "command.undo.success": "Cambio deshecho correctamente.",
   "sync.offlineManualOnly":
