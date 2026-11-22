@@ -1,12 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-test("Offline-first core finance flow: create account, agent guardrail, impact confirmation card & global Undo", async ({
+test("Offline-first core finance flow: navigate to Accounts, create account, agent guardrail, impact confirmation card & global Undo", async ({
   page,
 }) => {
   await page.goto("/");
 
   // Enter Offline Local Mode (works deterministically without backend)
   await page.getByRole("button", { name: /Usar modo Offline Local/i }).click();
+
+  // Navigate to Accounts tab (default tab is Overview)
+  await page.getByRole("button", { name: /^Cuentas$/i }).click();
+  await expect(page).toHaveURL(/\?tab=accounts/);
 
   // Create EUR bank account with initial balance 3000
   await page.getByLabel("Nombre cuenta").fill("Banco Principal");
@@ -34,7 +38,7 @@ test("Offline-first core finance flow: create account, agent guardrail, impact c
   await page.getByRole("button", { name: "Confirmar" }).click();
   await expect(page.getByText("5.000,00 €").first()).toBeVisible();
 
-  // Global Undo reverts balance back to 3.000,00 €
+  // Global Undo (sticky top banner, zero drawer overlap) reverts balance back to 3.000,00 €
   await page.getByRole("button", { name: "Deshacer" }).click();
   await expect(page.getByText("3.000,00 €").first()).toBeVisible();
 });
