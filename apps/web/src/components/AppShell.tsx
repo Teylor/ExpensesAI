@@ -3,15 +3,14 @@ import {
   AlertCircle,
   ArrowLeftRight,
   CloudOff,
+  History,
   Landmark,
   LayoutDashboard,
   LogOut,
   RefreshCw,
-  RotateCcw,
   SlidersHorizontal,
   Wallet,
   Wifi,
-  X,
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import type { AppTab } from "../navigation/tabs.js";
@@ -43,9 +42,9 @@ export interface AppShellProps {
   readonly onSyncNow: () => void;
   readonly userEmail: string | null;
   readonly onLogout: () => void;
-  readonly lastCommand: { commandId: string; summary: string } | null;
-  readonly onUndoLast: () => void;
-  readonly onDismissLastCommand: () => void;
+  /** Active (still-undoable) actions from the unified history projection. */
+  readonly historyActiveCount: number;
+  readonly onOpenHistory: () => void;
   readonly children: ReactNode;
 }
 
@@ -61,9 +60,8 @@ export function AppShell({
   onSyncNow,
   userEmail,
   onLogout,
-  lastCommand,
-  onUndoLast,
-  onDismissLastCommand,
+  historyActiveCount,
+  onOpenHistory,
   children,
 }: AppShellProps) {
   const activeItem =
@@ -191,15 +189,53 @@ export function AppShell({
                   type="button"
                   onClick={onSyncNow}
                   disabled={isSyncing}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-100 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:opacity-50"
+                  className="inline-flex min-h-11 w-11 items-center justify-center rounded-lg bg-zinc-800 text-zinc-100 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:opacity-50 sm:min-h-9 sm:w-auto sm:gap-1.5 sm:px-3.5 sm:py-1 sm:text-xs sm:font-medium lg:px-2.5"
                 >
                   <RefreshCw
-                    className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`}
+                    className={`h-3.5 w-3.5 shrink-0 ${isSyncing ? "animate-spin" : ""}`}
                     aria-hidden={true}
                   />
-                  <span>{t(locale, "shell.sync")}</span>
+                  <span className="sr-only sm:not-sr-only">
+                    {t(locale, "shell.sync")}
+                  </span>
                 </button>
               )}
+
+              {/* Actions History trigger: icon button (<lg) / labeled pill (lg+) */}
+              <button
+                type="button"
+                data-testid="history-trigger-button"
+                onClick={onOpenHistory}
+                aria-label={
+                  historyActiveCount > 0
+                    ? t(locale, "history.triggerAriaCount", {
+                        count: historyActiveCount,
+                      })
+                    : t(locale, "history.triggerAria")
+                }
+                className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-(--text-secondary) transition-colors hover:bg-(--bg-surface-strong) hover:text-(--text-primary) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 lg:h-9 lg:w-auto lg:gap-1.5 lg:px-3"
+              >
+                <History className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden={true} />
+                <span className="hidden text-sm font-medium lg:inline">
+                  {t(locale, "history.triggerButton")}
+                </span>
+                {historyActiveCount > 0 && (
+                  <span
+                    aria-hidden={true}
+                    className="hidden min-w-4 items-center justify-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-500/30 lg:inline-flex"
+                  >
+                    {historyActiveCount > 99 ? "99+" : historyActiveCount}
+                  </span>
+                )}
+                {historyActiveCount > 0 && (
+                  <span
+                    aria-hidden={true}
+                    className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1 text-[11px] font-bold text-zinc-950 ring-2 ring-(--bg-canvas) lg:hidden"
+                  >
+                    {historyActiveCount > 99 ? "99+" : historyActiveCount}
+                  </span>
+                )}
+              </button>
 
               {/* Desktop Locale Toggle (mobile lives in Manage tab to avoid header wrap) */}
               <div className="hidden rounded-lg bg-(--bg-surface-strong) p-0.5 ring-1 ring-(--border-subtle) lg:flex">
@@ -222,40 +258,6 @@ export function AppShell({
             </div>
           </div>
         </header>
-
-        {/* Sticky Global Undo Banner (zero overlap with Bottom Nav or Agent FAB) */}
-        {lastCommand && (
-          <div
-            role="status"
-            aria-live="polite"
-            data-testid="global-undo-banner"
-            className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-40 border-b border-emerald-500/30 bg-emerald-950/95 px-4 py-2.5 backdrop-blur lg:top-14"
-          >
-            <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 text-xs sm:text-sm">
-              <span className="min-w-0 flex-1 text-emerald-100">
-                {lastCommand.summary}
-              </span>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={onUndoLast}
-                  className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:min-h-8"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" aria-hidden={true} />
-                  <span>{t(locale, "shell.undo")}</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label={t(locale, "shell.dismissNotice")}
-                  onClick={onDismissLastCommand}
-                  className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-emerald-200 hover:bg-emerald-900/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:min-h-8 sm:min-w-8"
-                >
-                  <X className="h-4 w-4" aria-hidden={true} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Sync Failure Alert Banner */}
         {syncError && (

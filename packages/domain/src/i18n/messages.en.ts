@@ -208,6 +208,7 @@ export const messagesEn: MessageCatalog = {
   "history.error": "Could not load server history. Showing local actions only.",
 
   "toast.dismissAria": "Dismiss notification",
+  "toast.undoneSummary": "Action undone.",
   "sync.offlineManualOnly":
     "You are offline: manual mode stays available and changes will sync automatically once reconnected.",
   "error.currencyMismatch":

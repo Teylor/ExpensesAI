@@ -213,6 +213,7 @@ export const messagesEs = {
     "No se pudo cargar el historial del servidor. Se muestran las acciones locales.",
 
   "toast.dismissAria": "Cerrar notificación",
+  "toast.undoneSummary": "Acción deshecha.",
   "sync.offlineManualOnly":
     "Sin conexión: el modo manual sigue activo y tus cambios se sincronizarán al reconectar.",
   "error.currencyMismatch":

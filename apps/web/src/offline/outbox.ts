@@ -17,6 +17,7 @@ import type {
   LocalNetWorthItem,
   LocalRecurringRule,
   LocalTransaction,
+  OutboxEntry,
 } from "./db.js";
 
 export interface OutboxBatchAck {
@@ -79,6 +80,11 @@ export class OutboxSyncEngine {
 
   async getPendingCount(): Promise<number> {
     return this.db.outbox.where("status").equals("pending").count();
+  }
+
+  /** All outbox rows (pending, synced, failed and retained undone entries). */
+  async listEntries(): Promise<readonly OutboxEntry[]> {
+    return this.db.outbox.toArray();
   }
 
   async enqueueCommand(rawEnvelope: CommandEnvelope): Promise<void> {

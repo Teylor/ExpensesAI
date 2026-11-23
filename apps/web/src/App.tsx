@@ -9,10 +9,18 @@ import {
   type UserPreferences,
 } from "@agenticf/domain";
 import { Wallet } from "lucide-react";
-import { type FormEvent, useCallback, useEffect, useState } from "react";
 import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  type CommandHistoryItemDto,
   completeChatGptOAuthCallback,
   createHttpOutboxTransport,
+  fetchCommandHistory,
   fetchCurrentUser,
   hydrateOfflineDbFromServer,
   loginWithEmail,
@@ -23,6 +31,8 @@ import {
   runDueRecurringRulesRemote,
   startChatGptOAuthFlow,
 } from "./api/client.js";
+import { ActionsHistoryDrawer } from "./components/ActionsHistoryDrawer.js";
+import { ActionToast, type ActionToastData } from "./components/ActionToast.js";
 import { AgentFloatingDock } from "./components/AgentFloatingDock.js";
 import { AppShell } from "./components/AppShell.js";
 import { AccountsTab } from "./components/tabs/AccountsTab.js";
@@ -30,6 +40,7 @@ import { ActivityTab } from "./components/tabs/ActivityTab.js";
 import { ManageTab } from "./components/tabs/ManageTab.js";
 import { OverviewTab } from "./components/tabs/OverviewTab.js";
 import { WealthTab } from "./components/tabs/WealthTab.js";
+import { type HistoryFilter, projectHistory } from "./history/actions.js";
 import { type AppTab, buildTabUrl, parseAppTab } from "./navigation/tabs.js";
 import {
   createOfflineDb,
@@ -39,6 +50,7 @@ import {
   type LocalNetWorthItem,
   type LocalRecurringRule,
   type LocalTransaction,
+  type OutboxEntry,
 } from "./offline/db.js";
 import { OutboxSyncEngine } from "./offline/outbox.js";
 
@@ -90,10 +102,17 @@ export function App() {
     undefined,
   );
 
-  const [lastCommand, setLastCommand] = useState<{
-    commandId: string;
-    summary: string;
-  } | null>(null);
+  const [actionToast, setActionToast] = useState<ActionToastData | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("all");
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyServerError, setHistoryServerError] = useState(false);
+  const [serverHistoryItems, setServerHistoryItems] = useState<
+    CommandHistoryItemDto[] | null
+  >(null);
+  const [busyCommandId, setBusyCommandId] = useState<string | null>(null);
+  const [localEntries, setLocalEntries] = useState<readonly OutboxEntry[]>([]);
 
   // Auth form
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -135,7 +154,7 @@ export function App() {
   }, []);
 
   const reloadLocalState = useCallback(async () => {
-    const [accs, cats, txs, recs, invs, nws, fx, prefs, pending] =
+    const [accs, cats, txs, recs, invs, nws, fx, prefs, pending, outbox] =
       await Promise.all([
         offlineDb.accounts.toArray(),
         offlineDb.categories.toArray(),
@@ -146,6 +165,7 @@ export function App() {
         offlineDb.getLatestFxSnapshot(),
         offlineDb.getPreferences(),
         outboxEngine.getPendingCount(),
+        outboxEngine.listEntries(),
       ]);
 
     setAccounts(accs.filter((a) => !a.isArchived));
@@ -165,6 +185,7 @@ export function App() {
     setFxSnapshot(fx ?? undefined);
     setPreferences(prefs);
     setPendingCount(pending);
+    setLocalEntries(outbox);
   }, []);
 
   const handleSyncNow = useCallback(async () => {
@@ -182,6 +203,19 @@ export function App() {
       setIsSyncing(false);
     }
   }, [locale, reloadLocalState, user]);
+
+  const refreshServerHistory = useCallback(async () => {
+    if (!user) {
+      setServerHistoryItems(null);
+      setHistoryServerError(false);
+      return;
+    }
+    setHistoryLoading(true);
+    const items = await fetchCommandHistory(50);
+    setServerHistoryItems(items);
+    setHistoryServerError(items === null);
+    setHistoryLoading(false);
+  }, [user]);
 
   useEffect(() => {
     void (async () => {
@@ -268,9 +302,10 @@ export function App() {
     );
 
     await outboxEngine.enqueueCommand(envelope);
-    setLastCommand({
-      commandId: envelope.commandId,
+    setActionToast({
+      id: envelope.commandId,
       summary: impact.summary,
+      variant: "action",
     });
     await reloadLocalState();
 
@@ -279,14 +314,32 @@ export function App() {
     }
   };
 
-  const handleUndoLast = async () => {
-    if (!lastCommand) return;
-    await outboxEngine.undoCommand(lastCommand.commandId);
-    setLastCommand(null);
-    if (isOnline && user) {
-      await hydrateOfflineDbFromServer(offlineDb);
+  const handleUndoCommand = async (commandId: string) => {
+    if (busyCommandId) return;
+    setBusyCommandId(commandId);
+    try {
+      await outboxEngine.undoCommand(commandId);
+      if (isOnline && user) {
+        await hydrateOfflineDbFromServer(offlineDb);
+      }
+      await reloadLocalState();
+      if (isOnline && user) {
+        await refreshServerHistory();
+      }
+      setActionToast({
+        id: `${commandId}::undone`,
+        summary: t(locale, "toast.undoneSummary"),
+        variant: "undone",
+      });
+    } finally {
+      setBusyCommandId(null);
     }
-    await reloadLocalState();
+  };
+
+  const handleOpenHistory = () => {
+    setAgentOpen(false);
+    setHistoryOpen(true);
+    void refreshServerHistory();
   };
 
   const handleAuthSubmit = async (e: FormEvent) => {
@@ -312,7 +365,13 @@ export function App() {
     await offlineDb.clearLocalUserData();
     setUser(null);
     setOfflineGuest(false);
-    setLastCommand(null);
+    setActionToast(null);
+    setHistoryOpen(false);
+    setAgentOpen(false);
+    setServerHistoryItems(null);
+    setHistoryServerError(false);
+    setBusyCommandId(null);
+    setHistoryFilter("all");
     setSyncError(null);
     await reloadLocalState();
   };
@@ -356,6 +415,17 @@ export function App() {
     await hydrateOfflineDbFromServer(offlineDb);
     await reloadLocalState();
   };
+
+  const historyProjection = useMemo(
+    () =>
+      projectHistory({
+        localEntries,
+        serverItems: serverHistoryItems ?? [],
+        preferences,
+        filter: historyFilter,
+      }),
+    [localEntries, serverHistoryItems, preferences, historyFilter],
+  );
 
   const balancesSummary = computeBalancesSummary(
     accounts,
@@ -537,9 +607,8 @@ export function App() {
         onSyncNow={() => void handleSyncNow()}
         userEmail={user ? user.email : null}
         onLogout={() => void handleLogout()}
-        lastCommand={lastCommand}
-        onUndoLast={() => void handleUndoLast()}
-        onDismissLastCommand={() => setLastCommand(null)}
+        historyActiveCount={historyProjection.counts.active}
+        onOpenHistory={handleOpenHistory}
       >
         {activeTab === "overview" && (
           <OverviewTab
@@ -628,6 +697,38 @@ export function App() {
         {...(fxSnapshot ? { fxSnapshot } : {})}
         onDispatchCommand={dispatchCommand}
         onToggleConfirmEnabled={handleToggleAgentConfirm}
+        open={agentOpen}
+        onOpenChange={(nextOpen) => {
+          setAgentOpen(nextOpen);
+          if (nextOpen) setHistoryOpen(false);
+        }}
+      />
+
+      <ActionsHistoryDrawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        locale={locale}
+        isOnline={isOnline}
+        filter={historyFilter}
+        onFilterChange={setHistoryFilter}
+        loading={historyLoading}
+        serverError={historyServerError}
+        onRetry={() => void refreshServerHistory()}
+        items={historyProjection.items}
+        counts={historyProjection.counts}
+        busyCommandId={busyCommandId}
+        onUndoCommand={(commandId) => void handleUndoCommand(commandId)}
+      />
+
+      <ActionToast
+        toast={actionToast}
+        locale={locale}
+        onUndo={
+          actionToast && actionToast.variant === "action"
+            ? () => void handleUndoCommand(actionToast.id)
+            : null
+        }
+        onDismiss={() => setActionToast(null)}
       />
     </>
   );
