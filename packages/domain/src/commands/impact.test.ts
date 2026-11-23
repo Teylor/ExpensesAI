@@ -187,4 +187,43 @@ describe("simulateCommandImpact (deterministic agent confirmation preview)", () 
     );
     expect(impact.accountImpacts).toEqual([]);
   });
+
+  it("delegates non-balance fallback summaries to the localized action formatter", () => {
+    const command: CommandEnvelope = {
+      ...BASE_META,
+      type: "account.create",
+      payload: {
+        name: "Banco Principal",
+        accountType: "bank",
+        currency: "EUR",
+        initialBalance: "0",
+      },
+    };
+
+    const impact = simulateCommandImpact(
+      SAMPLE_STATE,
+      command,
+      DEFAULT_USER_PREFERENCES,
+    );
+
+    expect(impact.summary).toBe("Cuenta Banco Principal (Banco) creada");
+    expect(impact.accountImpacts).toEqual([]);
+  });
+
+  it("resolves account display names from simulation state in fallback summaries", () => {
+    const command: CommandEnvelope = {
+      ...BASE_META,
+      type: "account.archive",
+      payload: { accountId: BANK_ID },
+    };
+
+    const impact = simulateCommandImpact(
+      SAMPLE_STATE,
+      command,
+      DEFAULT_USER_PREFERENCES,
+    );
+
+    expect(impact.summary).toBe("Cuenta Banco Principal archivada");
+    expect(impact.accountImpacts).toEqual([]);
+  });
 });

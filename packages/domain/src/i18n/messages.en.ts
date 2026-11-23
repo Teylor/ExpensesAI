@@ -157,6 +157,57 @@ export const messagesEn: MessageCatalog = {
   "manage.sessionLabel": "Active session",
 
   "command.undo.success": "Change undone successfully.",
+
+  "action.summary.account.create": "Account {{name}} ({{type}}) created",
+  "action.summary.account.update": "Account {{name}} updated",
+  "action.summary.account.archive": "Account {{name}} archived",
+  "action.summary.transaction.record.income":
+    "New income of {{amount}} ({{description}})",
+  "action.summary.transaction.record.expense":
+    "New expense of {{amount}} ({{description}})",
+  "action.summary.transaction.transfer":
+    "Transfer of {{amount}} from {{fromAccount}} to {{toAccount}}",
+  "action.summary.transaction.delete": "Transaction deleted",
+  "action.summary.recurring.upsert":
+    "Recurring rule saved: {{description}} ({{amount}}, {{period}})",
+  "action.summary.recurring.delete": "Recurring rule deleted",
+  "action.summary.investment.upsert": "Investment {{name}} ({{amount}}) saved",
+  "action.summary.investment.delete": "Investment deleted",
+  "action.summary.networth.upsert":
+    "Net worth item {{name}} ({{amount}}) saved",
+  "action.summary.networth.delete": "Net worth item deleted",
+  "action.summary.category.upsert": "Category {{name}} saved",
+  "action.summary.category.delete": "Category deleted",
+  "action.summary.command.undo": "Action undone",
+  "action.summary.fallback": "Operation {{type}}",
+
+  "history.triggerButton": "History",
+  "history.triggerAria": "Actions history",
+  "history.triggerAriaCount": "{{count}} active actions",
+  "history.title": "Actions history",
+  "history.closeAria": "Close actions history",
+  "history.refreshAria": "Refreshing history",
+  "history.filterAria": "Actions history filters",
+  "history.filter.all": "All",
+  "history.filter.active": "Active",
+  "history.filter.undone": "Undone",
+  "history.actor.manual": "Manual",
+  "history.actor.agent": "AI Agent",
+  "history.actor.system": "System",
+  "history.status.pending": "Pending",
+  "history.status.synced": "Synced",
+  "history.status.failed": "Failed",
+  "history.status.undone": "Undone",
+  "history.undoAria": "Undo action",
+  "history.offlineUndoGuard":
+    "Connection required to undo already-synced actions.",
+  "history.empty.all": "No actions recorded yet.",
+  "history.empty.active": "No active actions.",
+  "history.empty.undone": "No undone actions.",
+  "history.empty.viewAll": "View all",
+  "history.error": "Could not load server history. Showing local actions only.",
+
+  "toast.dismissAria": "Dismiss notification",
   "sync.offlineManualOnly":
     "You are offline: manual mode stays available and changes will sync automatically once reconnected.",
   "error.currencyMismatch":
