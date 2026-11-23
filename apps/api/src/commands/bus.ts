@@ -80,6 +80,7 @@ export interface CommandHistoryItem {
   readonly createdAt: string;
   readonly undoneAt: string | null;
   readonly canUndo: boolean;
+  readonly payload: Record<string, unknown>;
   readonly result: Record<string, unknown>;
 }
 
@@ -259,6 +260,7 @@ export class CommandBus {
       createdAt: entry.createdAt.toISOString(),
       undoneAt: entry.undoneAt ? entry.undoneAt.toISOString() : null,
       canUndo: entry.undoneAt === null,
+      payload: entry.payload,
       result: entry.result,
     }));
   }

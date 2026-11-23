@@ -188,6 +188,45 @@ describe("CommandBus (idempotency, batch sync, global undo, tenant isolation)", 
     expect(results[1]?.status).toBe("applied");
   });
 
+  it("exposes the persisted payload on history items so clients can render localized summaries", async () => {
+    const repo = createInMemoryCommandLogRepo();
+    const bus = new CommandBus({ repository: repo });
+
+    bus.registerHandler("account.create", {
+      execute: async () => ({
+        result: { accountId: ACCOUNT_ID },
+        inversePayload: { deleteAccountId: ACCOUNT_ID },
+      }),
+      undo: async () => ({ ok: true }),
+    });
+
+    await bus.dispatch(USER_A, {
+      commandId: CMD_1,
+      actor: "agent",
+      issuedAtUtc: "2026-11-19T20:00:00.000Z",
+      type: "account.create",
+      payload: {
+        name: "Efectivo",
+        accountType: "cash",
+        currency: "EUR",
+        initialBalance: "200",
+      },
+    });
+
+    const history = await bus.listHistory(USER_A, 10);
+    expect(history).toHaveLength(1);
+    expect(history[0]?.commandId).toBe(CMD_1);
+    expect(history[0]?.actor).toBe("agent");
+    expect(history[0]?.commandType).toBe("account.create");
+    expect(history[0]?.canUndo).toBe(true);
+    expect(history[0]?.payload).toEqual({
+      name: "Efectivo",
+      accountType: "cash",
+      currency: "EUR",
+      initialBalance: "200",
+    });
+  });
+
   it("throws CommandHandlerNotFoundError when no handler is registered for a command type", async () => {
     const bus = new CommandBus({ repository: createInMemoryCommandLogRepo() });
 
