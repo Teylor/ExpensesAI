@@ -17,6 +17,8 @@ export interface HistoryActionItem {
   source: HistoryItemSource;
   status: HistoryItemStatus;
   actor: CommandActor;
+  /** The command type (for iconography); e.g. `"transaction.record"`. */
+  commandType: CommandEnvelope["type"];
   /** When the action was created (local: enqueuedAt, server: createdAt). */
   timestamp: string;
   undoneAt: string | null;
@@ -68,6 +70,7 @@ function projectLocalEntry(
     source: "local",
     status,
     actor: entry.envelope.actor,
+    commandType: entry.envelope.type,
     timestamp: entry.enqueuedAt,
     undoneAt: entry.status === "undone" ? (entry.undoneAt ?? null) : null,
     summary:
@@ -93,6 +96,7 @@ function projectServerItem(
     source: "server",
     status,
     actor: item.actor,
+    commandType: item.commandType as CommandEnvelope["type"],
     timestamp: item.createdAt,
     undoneAt: item.undoneAt,
     summary: formatCommandActionSummary(envelope, preferences),
