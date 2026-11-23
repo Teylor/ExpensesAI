@@ -100,6 +100,37 @@ export function createHttpOutboxTransport(baseUrl = ""): OutboxTransport {
   };
 }
 
+export interface CommandHistoryItemDto {
+  commandId: string;
+  actor: "manual" | "agent" | "system";
+  commandType: string;
+  createdAt: string;
+  undoneAt: string | null;
+  canUndo: boolean;
+  payload: Record<string, unknown>;
+  result: Record<string, unknown>;
+}
+
+export async function fetchCommandHistory(
+  limit = 50,
+  baseUrl = "",
+): Promise<CommandHistoryItemDto[] | null> {
+  try {
+    const clamped = Math.min(100, Math.max(1, Math.trunc(limit)));
+    const res = await fetch(
+      `${baseUrl}/api/v1/commands/history?limit=${encodeURIComponent(
+        String(clamped),
+      )}`,
+      { credentials: "include" },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { items: CommandHistoryItemDto[] };
+    return data.items;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchCurrentUser(
   baseUrl = "",
 ): Promise<AuthMeResponse | null> {
