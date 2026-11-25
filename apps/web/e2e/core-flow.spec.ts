@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-test("Offline-first core finance flow: navigate to Accounts, create account, agent guardrail, impact confirmation card & global Undo", async ({
+test("Offline-first core finance flow: navigate to Accounts, create account, agent guardrail, impact confirmation card & ActionToast Undo", async ({
   page,
 }) => {
   await page.goto("/");
+
+  // The sticky global undo banner is gone from the very start
+  await expect(page.getByTestId("global-undo-banner")).toHaveCount(0);
 
   // Enter Offline Local Mode (works deterministically without backend)
   await page.getByRole("button", { name: /Usar modo Offline Local/i }).click();
@@ -38,7 +41,18 @@ test("Offline-first core finance flow: navigate to Accounts, create account, age
   await page.getByRole("button", { name: "Confirmar" }).click();
   await expect(page.getByText("5.000,00 €").first()).toBeVisible();
 
-  // Global Undo (sticky top banner, zero drawer overlap) reverts balance back to 3.000,00 €
-  await page.getByRole("button", { name: "Deshacer" }).click();
+  // ActionToast appears instead of the old sticky banner; hover pauses its 3s countdown
+  const toast = page.getByTestId("action-toast");
+  await expect(toast).toBeVisible();
+  await toast.hover();
+  await expect(page.getByTestId("action-toast-undo")).toBeVisible();
+
+  // Toast Undo reverts balance back to 3.000,00 € and flips the toast to the "undone" variant
+  await page.getByTestId("action-toast-undo").click();
   await expect(page.getByText("3.000,00 €").first()).toBeVisible();
+  await expect(
+    page.getByText("Acción deshecha.", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByTestId("action-toast-undo")).toHaveCount(0);
+  await expect(page.getByTestId("action-toast-dismiss")).toBeVisible();
 });

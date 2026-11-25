@@ -100,7 +100,12 @@ export interface LocalNetWorthItem {
   updatedAt: string;
 }
 
-export type OutboxItemStatus = "pending" | "syncing" | "synced" | "failed";
+export type OutboxItemStatus =
+  | "pending"
+  | "syncing"
+  | "synced"
+  | "failed"
+  | "undone";
 
 export interface OutboxEntry {
   commandId: string;
@@ -111,6 +116,10 @@ export interface OutboxEntry {
   enqueuedAt: string;
   syncedAt: string | null;
   inverseSnapshot?: Record<string, unknown> | null;
+  /** Set when the entry was undone locally; the row is retained (never deleted). */
+  undoneAt?: string | null;
+  /** Cached localized one-line summary for the action history drawer (optional). */
+  summary?: string | null;
 }
 
 interface StoredKvRow {

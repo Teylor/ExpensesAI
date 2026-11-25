@@ -13,6 +13,7 @@ import {
 } from "../money/money.js";
 import type { UserPreferences } from "../user/preferences.js";
 import type { CommandEnvelope } from "./catalog.js";
+import { formatCommandActionSummary } from "./summary.js";
 
 export interface AccountBalanceSnapshot {
   readonly id: string;
@@ -249,10 +250,16 @@ export function simulateCommandImpact(
     }
 
     default: {
+      const accountNames: Record<string, string> = {};
+      for (const [accountId, account] of Object.entries(state.accounts)) {
+        accountNames[accountId] = account.name;
+      }
       return {
         commandId: command.commandId,
         commandType: command.type,
-        summary: `${command.type}`,
+        summary: formatCommandActionSummary(command, preferences, {
+          accountNames,
+        }),
         accountImpacts: [],
       };
     }

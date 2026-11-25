@@ -48,6 +48,9 @@ export interface AgentFloatingDockProps {
   readonly fxSnapshot?: FxRateSnapshot;
   readonly onDispatchCommand: (envelope: CommandEnvelope) => Promise<void>;
   readonly onToggleConfirmEnabled: (enabled: boolean) => Promise<void>;
+  /** Controlled open state so other drawers (e.g. Actions History) can close it. */
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 interface ChatMessage {
@@ -81,8 +84,9 @@ export function AgentFloatingDock({
   fxSnapshot,
   onDispatchCommand,
   onToggleConfirmEnabled,
+  open,
+  onOpenChange,
 }: AgentFloatingDockProps) {
-  const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"chat" | "settings">("chat");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -107,11 +111,11 @@ export function AgentFloatingDock({
   const voiceSupported = voiceProvider.isSupported();
 
   const closeDrawer = useCallback(() => {
-    setOpen(false);
+    onOpenChange(false);
     requestAnimationFrame(() => {
       triggerRef.current?.focus();
     });
-  }, []);
+  }, [onOpenChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -699,7 +703,7 @@ export function AgentFloatingDock({
         data-testid="agent-floating-trigger"
         aria-label={t(locale, "agent.ui.triggerAria")}
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => onOpenChange(!open)}
         className={`${
           open ? "hidden lg:flex" : "flex"
         } fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 h-12 w-12 items-center justify-center gap-2 rounded-full bg-emerald-500 font-semibold text-zinc-950 shadow-lg shadow-emerald-500/25 transition hover:scale-105 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:w-auto sm:px-4 lg:right-5 lg:bottom-5 lg:h-13`}

@@ -160,6 +160,60 @@ export const messagesEs = {
   "manage.sessionLabel": "Sesión activa",
 
   "command.undo.success": "Cambio deshecho correctamente.",
+
+  "action.summary.account.create": "Cuenta {{name}} ({{type}}) creada",
+  "action.summary.account.update": "Cuenta {{name}} actualizada",
+  "action.summary.account.archive": "Cuenta {{name}} archivada",
+  "action.summary.transaction.record.income":
+    "Nuevo ingreso de {{amount}} ({{description}})",
+  "action.summary.transaction.record.expense":
+    "Nuevo gasto de {{amount}} ({{description}})",
+  "action.summary.transaction.transfer":
+    "Transferencia de {{amount}} desde {{fromAccount}} hacia {{toAccount}}",
+  "action.summary.transaction.delete": "Movimiento eliminado",
+  "action.summary.recurring.upsert":
+    "Regla recurrente guardada: {{description}} ({{amount}}, {{period}})",
+  "action.summary.recurring.delete": "Regla recurrente eliminada",
+  "action.summary.investment.upsert":
+    "Inversión {{name}} ({{amount}}) guardada",
+  "action.summary.investment.delete": "Inversión eliminada",
+  "action.summary.networth.upsert":
+    "Elemento de patrimonio {{name}} ({{amount}}) guardado",
+  "action.summary.networth.delete": "Elemento de patrimonio eliminado",
+  "action.summary.category.upsert": "Categoría {{name}} guardada",
+  "action.summary.category.delete": "Categoría eliminada",
+  "action.summary.command.undo": "Acción deshecha",
+  "action.summary.fallback": "Operación {{type}}",
+
+  "history.triggerButton": "Historial",
+  "history.triggerAria": "Historial de acciones",
+  "history.triggerAriaCount": "{{count}} acciones activas",
+  "history.title": "Historial de acciones",
+  "history.closeAria": "Cerrar historial de acciones",
+  "history.refreshAria": "Actualizando historial",
+  "history.filterAria": "Filtros del historial de acciones",
+  "history.filter.all": "Todas",
+  "history.filter.active": "Activas",
+  "history.filter.undone": "Deshechas",
+  "history.actor.manual": "Manual",
+  "history.actor.agent": "Agente IA",
+  "history.actor.system": "Sistema",
+  "history.status.pending": "Pendiente",
+  "history.status.synced": "Sincronizado",
+  "history.status.failed": "Fallido",
+  "history.status.undone": "Deshecha",
+  "history.undoAria": "Deshacer acción",
+  "history.offlineUndoGuard":
+    "Conexión necesaria para deshacer acciones ya sincronizadas.",
+  "history.empty.all": "Aún no hay acciones registradas.",
+  "history.empty.active": "No hay acciones activas.",
+  "history.empty.undone": "No hay acciones deshechas.",
+  "history.empty.viewAll": "Ver todas",
+  "history.error":
+    "No se pudo cargar el historial del servidor. Se muestran las acciones locales.",
+
+  "toast.dismissAria": "Cerrar notificación",
+  "toast.undoneSummary": "Acción deshecha.",
   "sync.offlineManualOnly":
     "Sin conexión: el modo manual sigue activo y tus cambios se sincronizarán al reconectar.",
   "error.currencyMismatch":

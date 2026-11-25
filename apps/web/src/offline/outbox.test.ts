@@ -72,11 +72,15 @@ describe("OutboxSyncEngine (Optimistic decimal.js execution, FIFO sync, retry & 
 
       expect((await db.accounts.get(ACC_EUR_ID))?.balance).toBe("5000.35");
 
-      // Offline Undo of the pending income command reverts balance to 3000.1 and removes from pending outbox
+      // Offline Undo of the pending income command reverts balance to 3000.1 and
+      // retains the outbox row as status "undone" (never deleted)
       await engine.undoCommand(incomeCmdId);
       expect((await db.accounts.get(ACC_EUR_ID))?.balance).toBe("3000.1");
       expect(await db.transactions.get(TX_INCOME_ID)).toBeUndefined();
       expect(await engine.getPendingCount()).toBe(1);
+      const undoneIncomeEntry = await db.outbox.get(incomeCmdId);
+      expect(undoneIncomeEntry?.status).toBe("undone");
+      expect(undoneIncomeEntry?.undoneAt).not.toBeNull();
     } finally {
       await db.delete();
     }
@@ -189,6 +193,10 @@ describe("OutboxSyncEngine (Optimistic decimal.js execution, FIFO sync, retry & 
       await engine.undoCommand(expenseCmdId);
       expect(undoneRemoteIds).toEqual([expenseCmdId]);
       expect((await db.accounts.get(ACC_EUR_ID))?.balance).toBe("800");
+      const undoneExpenseEntry = await db.outbox.get(expenseCmdId);
+      expect(undoneExpenseEntry?.status).toBe("undone");
+      expect(undoneExpenseEntry?.undoneAt).not.toBeNull();
+      expect(await engine.getPendingCount()).toBe(0);
     } finally {
       await db.delete();
     }
@@ -226,6 +234,71 @@ describe("OutboxSyncEngine (Optimistic decimal.js execution, FIFO sync, retry & 
       const entry = await db.outbox.get(badCmdId);
       expect(entry?.status).toBe("failed");
       expect(entry?.lastError).toContain("ACCOUNT_CURRENCY_MISMATCH");
+    } finally {
+      await db.delete();
+    }
+  });
+
+  it("treats undoing an already-undone outbox entry as a no-op and keeps undone rows out of sync", async () => {
+    const db = createOfflineDb(`outbox_undone_${Date.now()}`);
+    const undoneRemoteIds: string[] = [];
+    const transport: OutboxTransport = {
+      async sendBatch(commands) {
+        return commands.map((c) => ({
+          commandId: c.commandId,
+          status: "applied" as const,
+        }));
+      },
+      async undoCommand(commandId) {
+        undoneRemoteIds.push(commandId);
+      },
+    };
+    const engine = new OutboxSyncEngine({
+      db,
+      transport,
+      now: () => new Date("2026-11-23T10:00:00.000Z"),
+    });
+
+    try {
+      const cmdId = "80000000-0000-4000-8000-000000000001";
+      await engine.enqueueCommand({
+        commandId: cmdId,
+        actor: "agent",
+        issuedAtUtc: "2026-11-23T09:00:00.000Z",
+        type: "account.create",
+        payload: {
+          accountId: ACC_USD_ID,
+          name: "USD Cash",
+          accountType: "bank",
+          currency: "USD",
+          initialBalance: "75",
+        },
+      });
+
+      // Sync to the server first so the entry becomes "synced"
+      const sync = await engine.syncPending();
+      expect(sync.pendingCount).toBe(0);
+      expect((await db.outbox.get(cmdId))?.status).toBe("synced");
+
+      // Undoing a synced entry calls the remote transport and retains it as "undone"
+      await engine.undoCommand(cmdId);
+      expect(undoneRemoteIds).toEqual([cmdId]);
+      let undoneEntry = await db.outbox.get(cmdId);
+      expect(undoneEntry?.status).toBe("undone");
+      expect(undoneEntry?.undoneAt).toBe("2026-11-23T10:00:00.000Z");
+
+      // Undoing again is a no-op: no extra remote call, state untouched
+      await engine.undoCommand(cmdId);
+      expect(undoneRemoteIds).toEqual([cmdId]);
+      undoneEntry = await db.outbox.get(cmdId);
+      expect(undoneEntry?.status).toBe("undone");
+      expect(undoneEntry?.undoneAt).toBe("2026-11-23T10:00:00.000Z");
+
+      // Undone rows never join sync runs or count as pending
+      const after = await engine.syncPending();
+      expect(after.pendingCount).toBe(0);
+      expect(after.syncedCount).toBe(0);
+      expect(await engine.getPendingCount()).toBe(0);
     } finally {
       await db.delete();
     }

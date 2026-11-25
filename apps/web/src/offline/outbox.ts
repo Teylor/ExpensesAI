@@ -17,6 +17,7 @@ import type {
   LocalNetWorthItem,
   LocalRecurringRule,
   LocalTransaction,
+  OutboxEntry,
 } from "./db.js";
 
 export interface OutboxBatchAck {
@@ -81,6 +82,11 @@ export class OutboxSyncEngine {
     return this.db.outbox.where("status").equals("pending").count();
   }
 
+  /** All outbox rows (pending, synced, failed and retained undone entries). */
+  async listEntries(): Promise<readonly OutboxEntry[]> {
+    return this.db.outbox.toArray();
+  }
+
   async enqueueCommand(rawEnvelope: CommandEnvelope): Promise<void> {
     const envelope = commandEnvelopeSchema.parse(rawEnvelope);
     const existing = await this.db.outbox.get(envelope.commandId);
@@ -105,20 +111,38 @@ export class OutboxSyncEngine {
 
   async undoCommand(commandId: string): Promise<void> {
     const entry = await this.db.outbox.get(commandId);
+
+    if (entry?.status === "undone") {
+      // Already undone: idempotent no-op (no second remote call, state untouched).
+      return;
+    }
+
     if (entry?.status === "pending") {
       if (entry.inverseSnapshot) {
         await this.revertOptimisticMutation(entry.inverseSnapshot);
       }
-      await this.db.outbox.delete(commandId);
+      // Retain the row as "undone" so it stays visible in the unified history.
+      await this.db.outbox.put({
+        ...entry,
+        status: "undone",
+        undoneAt: this.now().toISOString(),
+        lastError: null,
+      });
       return;
     }
 
+    // Synced / failed / or no local row (server-side history entry): undo remote.
     await this.transport.undoCommand(commandId);
-    if (entry?.inverseSnapshot) {
-      await this.revertOptimisticMutation(entry.inverseSnapshot);
-    }
     if (entry) {
-      await this.db.outbox.delete(commandId);
+      if (entry.inverseSnapshot) {
+        await this.revertOptimisticMutation(entry.inverseSnapshot);
+      }
+      await this.db.outbox.put({
+        ...entry,
+        status: "undone",
+        undoneAt: this.now().toISOString(),
+        lastError: null,
+      });
     }
   }
 

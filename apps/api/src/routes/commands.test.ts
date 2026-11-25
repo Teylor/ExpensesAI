@@ -206,7 +206,37 @@ describe("CommandBus protected REST routes (/api/v1/commands*)", () => {
         headers: { cookie: cookieA },
       });
       expect(history.statusCode).toBe(200);
-      expect(history.json().items).toHaveLength(2);
+      const historyItems = history.json().items as Array<{
+        commandId: string;
+        payload?: unknown;
+      }>;
+      expect(historyItems).toHaveLength(2);
+      expect(Object.keys(historyItems[0] ?? {}).sort()).toEqual(
+        [
+          "actor",
+          "canUndo",
+          "commandId",
+          "commandType",
+          "createdAt",
+          "payload",
+          "result",
+          "undoneAt",
+        ].sort(),
+      );
+      const itemByCommandId = (id: string) =>
+        historyItems.find((item) => item.commandId === id);
+      expect(itemByCommandId(CMD_1)?.payload).toEqual({
+        name: "Banco Principal",
+        accountType: "bank",
+        currency: "EUR",
+        initialBalance: "3000",
+      });
+      expect(itemByCommandId(CMD_2)?.payload).toEqual({
+        name: "Efectivo",
+        accountType: "cash",
+        currency: "EUR",
+        initialBalance: "150",
+      });
 
       // User B cannot undo User A's command -> 404
       const foreignUndo = await app.inject({
