@@ -36,10 +36,10 @@ Desde la raíz del repositorio en tu NAS:
 docker compose -f docker/compose.nas.yml up -d --build
 ```
 
-Aplica las migraciones Drizzle (tablas `users`, `sessions`, `accounts`, `categories`, `transactions`, `command_log`, `fx_rates`, `recurring_rules`, `investments`, `net_worth_items`, `ai_connections`, `ai_oauth_states`):
+Aplica las migraciones Drizzle (la API las ejecuta automáticamente al arrancar cuando `AUTO_MIGRATE=true`, y también pueden lanzarse manualmente; tablas `users`, `sessions`, `accounts`, `categories`, `transactions`, `command_log`, `fx_rates`, `recurring_rules`, `investments`, `net_worth_items`, `ai_connections`, `ai_oauth_states`):
 
 ```bash
-docker compose -f docker/compose.nas.yml exec api node --import ./apps/api/dist/observability/instrument.js -e "import('./apps/api/dist/db/migrate.js')"
+docker compose -f docker/compose.nas.yml exec api node apps/api/dist/db/migrate.js
 ```
 *(O en desarrollo local con PostgreSQL levantado: `pnpm --filter @agenticf/api db:migrate`.)*
 
@@ -51,7 +51,7 @@ Comprueba salud del sistema:
 Programa una tarea cron semanal/diaria en el NAS para volcar la base de datos:
 
 ```bash
-docker exec agenticf-nas-postgres-1 pg_dump -U agenticf agenticf | gzip > /volume1/backups/agenticf-$(date +%F).sql.gz
+docker exec expenses-ai-postgres-1 pg_dump -U agenticf agenticf | gzip > /volume1/backups/agenticf-$(date +%F).sql.gz
 ```
 
 ## 5. Migración futura a Cloud (V2-05 — AWS / Vercel / Kubernetes) sin tocar código
