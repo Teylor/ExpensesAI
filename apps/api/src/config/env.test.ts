@@ -52,21 +52,21 @@ describe("parseEnv (12-factor stateless config)", () => {
   });
 
   it("parses AUTO_MIGRATE booleans and rejects invalid values", () => {
-    expect(parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "false" }).AUTO_MIGRATE).toBe(
-      false,
-    );
-    expect(parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "0" }).AUTO_MIGRATE).toBe(
-      false,
-    );
-    expect(parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "TRUE" }).AUTO_MIGRATE).toBe(
-      true,
-    );
-    expect(parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "1" }).AUTO_MIGRATE).toBe(
-      true,
-    );
-    expect(parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: " " }).AUTO_MIGRATE).toBe(
-      true,
-    );
+    expect(
+      parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "false" }).AUTO_MIGRATE,
+    ).toBe(false);
+    expect(
+      parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "0" }).AUTO_MIGRATE,
+    ).toBe(false);
+    expect(
+      parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "TRUE" }).AUTO_MIGRATE,
+    ).toBe(true);
+    expect(
+      parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "1" }).AUTO_MIGRATE,
+    ).toBe(true);
+    expect(
+      parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: " " }).AUTO_MIGRATE,
+    ).toBe(true);
     expect(() =>
       parseEnv({ ...VALID_BASE_ENV, AUTO_MIGRATE: "maybe" }),
     ).toThrow(/AUTO_MIGRATE/i);
