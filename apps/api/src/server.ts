@@ -22,6 +22,7 @@ import {
 import { CommandBus, PostgresCommandLogRepository } from "./commands/bus.js";
 import { loadEnvFilesIfPresent, parseEnv } from "./config/env.js";
 import { createDbClient } from "./db/client.js";
+import { applyStartupMigrationsIfEnabled } from "./db/migrate.js";
 import { createDefaultFxProvider } from "./fx/providers.js";
 import { startFxDailyScheduler } from "./fx/scheduler.js";
 import {
@@ -64,6 +65,9 @@ async function start(): Promise<void> {
   });
 
   const dbClient = createDbClient(env.DATABASE_URL);
+  if (await applyStartupMigrationsIfEnabled(dbClient, env.AUTO_MIGRATE)) {
+    console.info("Database migrations applied successfully.");
+  }
   const authService = new AuthService({
     repository: new PostgresAuthRepository(dbClient),
   });

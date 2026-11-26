@@ -44,6 +44,33 @@ const normalizeEnumInput = (value: unknown): unknown => {
   return trimmed === "" ? undefined : trimmed.toLowerCase();
 };
 
+const normalizeBooleanInput = (value: unknown): unknown => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const normalized = normalizeEnumInput(value);
+  if (normalized === undefined) {
+    return undefined;
+  }
+  if (
+    normalized === "true" ||
+    normalized === "1" ||
+    normalized === "yes" ||
+    normalized === "on"
+  ) {
+    return true;
+  }
+  if (
+    normalized === "false" ||
+    normalized === "0" ||
+    normalized === "no" ||
+    normalized === "off"
+  ) {
+    return false;
+  }
+  return value;
+};
+
 const envSchema = z
   .object({
     NODE_ENV: z.preprocess(
@@ -92,6 +119,10 @@ const envSchema = z
     CHATGPT_OAUTH_REDIRECT_URI: z
       .url()
       .default("http://localhost:5173/oauth/chatgpt/callback"),
+    AUTO_MIGRATE: z.preprocess(
+      normalizeBooleanInput,
+      z.boolean().default(true),
+    ),
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === "production" && data.CORS_ORIGIN.trim() === "*") {
