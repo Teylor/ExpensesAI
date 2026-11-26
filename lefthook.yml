@@ -1,6 +1,13 @@
+pre-commit:
+  commands:
+    protect-main:
+      run: node scripts/protect-main.mjs commit
+
 pre-push:
   parallel: false
   commands:
+    protect-main:
+      run: node scripts/protect-main.mjs push
     typecheck:
       run: pnpm typecheck
     lint:
